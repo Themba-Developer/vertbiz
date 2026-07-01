@@ -5,9 +5,9 @@ import { SiteShell } from "@/components/SiteShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "RegistrCo — Register Your South African Company in Minutes" },
+      { title: "Vert Corp Group — Register Your South African Company in Minutes" },
       { name: "description", content: "Fast, transparent CIPC company registration in South Africa. Name reservation and registration certificate included for R112.50." },
-      { property: "og:title", content: "RegistrCo — CIPC Company Registration in South Africa" },
+      { property: "og:title", content: "Vert Corp Group — CIPC Company Registration in South Africa" },
       { property: "og:description", content: "Register your Pty (Ltd) with CIPC in minutes. Flat fee of R112.50, fully online." },
     ],
   }),

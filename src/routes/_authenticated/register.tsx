@@ -9,14 +9,13 @@ import {
   loadRegistration,
   saveRegistration,
   type Director,
-  type RegistrationData,
-  type UploadedFile,
+  type RegistrationDraft,
 } from "@/lib/registration-store";
 
-export const Route = createFileRoute("/register")({
+export const Route = createFileRoute("/_authenticated/register")({
   head: () => ({
     meta: [
-      { title: "Register Your Company — RegistrCo" },
+      { title: "Register Your Company — Vert Corp Group" },
       { name: "description", content: "Complete your CIPC company registration online: director details, proposed names, and documents." },
     ],
   }),
@@ -34,7 +33,7 @@ const ACCEPTED = ["application/pdf", "image/png", "image/jpeg"];
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const [data, setData] = useState<RegistrationData>(emptyRegistration());
+  const [data, setData] = useState<RegistrationDraft>(emptyRegistration());
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -48,7 +47,7 @@ function RegisterPage() {
     if (hydrated) saveRegistration(data);
   }, [data, hydrated]);
 
-  const update = (partial: Partial<RegistrationData>) =>
+  const update = (partial: Partial<RegistrationDraft>) =>
     setData((d) => ({ ...d, ...partial }));
 
   const validateStep = (): string[] => {
@@ -157,25 +156,14 @@ function RegisterPage() {
   );
 }
 
-/* ---------- Step 1 ---------- */
-
-function DirectorsStep({
-  directors,
-  onChange,
-}: {
-  directors: Director[];
-  onChange: (d: Director[]) => void;
-}) {
+function DirectorsStep({ directors, onChange }: { directors: Director[]; onChange: (d: Director[]) => void }) {
   const setOne = (id: string, patch: Partial<Director>) =>
     onChange(directors.map((d) => (d.id === id ? { ...d, ...patch } : d)));
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-foreground">Director details</h2>
-      <p className="text-sm text-muted-foreground mt-1">
-        Provide details for each director of the company.
-      </p>
-
+      <p className="text-sm text-muted-foreground mt-1">Provide details for each director of the company.</p>
       <div className="mt-6 space-y-6">
         {directors.map((d, i) => (
           <div key={d.id} className="rounded-xl border border-border bg-surface/60 p-5">
@@ -191,75 +179,17 @@ function DirectorsStep({
                 </button>
               )}
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Full names">
-                <input
-                  type="text"
-                  value={d.fullNames}
-                  onChange={(e) => setOne(d.id, { fullNames: e.target.value })}
-                  className={inputCls}
-                  placeholder="e.g. Thandiwe Nomsa"
-                />
-              </Field>
-              <Field label="Surname">
-                <input
-                  type="text"
-                  value={d.surname}
-                  onChange={(e) => setOne(d.id, { surname: e.target.value })}
-                  className={inputCls}
-                  placeholder="e.g. Mokoena"
-                />
-              </Field>
-              <Field label="South African ID number">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={13}
-                  value={d.idNumber}
-                  onChange={(e) =>
-                    setOne(d.id, { idNumber: e.target.value.replace(/\D/g, "") })
-                  }
-                  className={inputCls}
-                  placeholder="13 digits"
-                />
-              </Field>
-              <Field label="Email address">
-                <input
-                  type="email"
-                  value={d.email}
-                  onChange={(e) => setOne(d.id, { email: e.target.value })}
-                  className={inputCls}
-                  placeholder="name@email.com"
-                />
-              </Field>
-              <Field label="Phone number">
-                <input
-                  type="tel"
-                  value={d.phone}
-                  onChange={(e) => setOne(d.id, { phone: e.target.value })}
-                  className={inputCls}
-                  placeholder="082 123 4567"
-                />
-              </Field>
-              <Field label="Physical address" className="sm:col-span-2">
-                <textarea
-                  rows={2}
-                  value={d.address}
-                  onChange={(e) => setOne(d.id, { address: e.target.value })}
-                  className={inputCls}
-                  placeholder="Street, suburb, city, postal code"
-                />
-              </Field>
+              <Field label="Full names"><input type="text" value={d.fullNames} onChange={(e) => setOne(d.id, { fullNames: e.target.value })} className={inputCls} placeholder="e.g. Thandiwe Nomsa" /></Field>
+              <Field label="Surname"><input type="text" value={d.surname} onChange={(e) => setOne(d.id, { surname: e.target.value })} className={inputCls} placeholder="e.g. Mokoena" /></Field>
+              <Field label="South African ID number"><input type="text" inputMode="numeric" maxLength={13} value={d.idNumber} onChange={(e) => setOne(d.id, { idNumber: e.target.value.replace(/\D/g, "") })} className={inputCls} placeholder="13 digits" /></Field>
+              <Field label="Email address"><input type="email" value={d.email} onChange={(e) => setOne(d.id, { email: e.target.value })} className={inputCls} placeholder="name@email.com" /></Field>
+              <Field label="Phone number"><input type="tel" value={d.phone} onChange={(e) => setOne(d.id, { phone: e.target.value })} className={inputCls} placeholder="082 123 4567" /></Field>
+              <Field label="Physical address" className="sm:col-span-2"><textarea rows={2} value={d.address} onChange={(e) => setOne(d.id, { address: e.target.value })} className={inputCls} placeholder="Street, suburb, city, postal code" /></Field>
             </div>
           </div>
         ))}
-
-        <button
-          type="button"
-          onClick={() => onChange([...directors, emptyDirector()])}
-          className="inline-flex items-center gap-2 rounded-md border border-dashed border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition w-full justify-center"
-        >
+        <button type="button" onClick={() => onChange([...directors, emptyDirector()])} className="inline-flex items-center gap-2 rounded-md border border-dashed border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition w-full justify-center">
           <Plus className="h-4 w-4" /> Add Another Director
         </button>
       </div>
@@ -267,42 +197,21 @@ function DirectorsStep({
   );
 }
 
-/* ---------- Step 2 ---------- */
-
-function NamesStep({
-  names,
-  onChange,
-}: {
-  names: [string, string, string, string];
-  onChange: (n: [string, string, string, string]) => void;
-}) {
+function NamesStep({ names, onChange }: { names: [string, string, string, string]; onChange: (n: [string, string, string, string]) => void }) {
   const set = (i: number, v: string) => {
     const copy = [...names] as [string, string, string, string];
     copy[i] = v;
     onChange(copy);
   };
-  const labels = [
-    "Proposed Name 1 (Preferred)",
-    "Proposed Name 2",
-    "Proposed Name 3",
-    "Proposed Name 4",
-  ];
+  const labels = ["Proposed Name 1 (Preferred)", "Proposed Name 2", "Proposed Name 3", "Proposed Name 4"];
   return (
     <div>
       <h2 className="text-2xl font-bold text-foreground">Proposed company names</h2>
-      <p className="text-sm text-muted-foreground mt-1">
-        CIPC requires up to 4 proposed names. We submit them in the order you provide; if your first choice is unavailable, we try the next one.
-      </p>
+      <p className="text-sm text-muted-foreground mt-1">CIPC requires up to 4 proposed names. We submit them in the order you provide.</p>
       <div className="mt-6 space-y-4">
         {labels.map((label, i) => (
           <Field key={label} label={label} required={i === 0}>
-            <input
-              type="text"
-              value={names[i]}
-              onChange={(e) => set(i, e.target.value)}
-              className={inputCls}
-              placeholder={i === 0 ? "Your top choice" : "Optional but recommended"}
-            />
+            <input type="text" value={names[i]} onChange={(e) => set(i, e.target.value)} className={inputCls} placeholder={i === 0 ? "Your top choice" : "Optional but recommended"} />
           </Field>
         ))}
       </div>
@@ -310,134 +219,54 @@ function NamesStep({
   );
 }
 
-/* ---------- Step 3 ---------- */
-
-function DocumentsStep({
-  idCopies,
-  proofOfAddress,
-  onChange,
-}: {
-  idCopies: UploadedFile[];
-  proofOfAddress: UploadedFile[];
-  onChange: (p: Partial<RegistrationData>) => void;
-}) {
-  const handleFiles = (
-    files: FileList | null,
-    target: "idCopies" | "proofOfAddress",
-    current: UploadedFile[],
-  ) => {
+function DocumentsStep({ idCopies, proofOfAddress, onChange }: { idCopies: File[]; proofOfAddress: File[]; onChange: (p: Partial<RegistrationDraft>) => void }) {
+  const handleFiles = (files: FileList | null, target: "idCopies" | "proofOfAddress", current: File[]) => {
     if (!files) return;
-    const accepted: UploadedFile[] = [];
+    const accepted: File[] = [];
     const errs: string[] = [];
     Array.from(files).forEach((f) => {
-      if (!ACCEPTED.includes(f.type)) {
-        errs.push(`${f.name}: unsupported file type`);
-        return;
-      }
-      if (f.size > MAX_BYTES) {
-        errs.push(`${f.name}: exceeds 5MB`);
-        return;
-      }
-      accepted.push({ name: f.name, size: f.size, type: f.type });
+      if (!ACCEPTED.includes(f.type)) { errs.push(`${f.name}: unsupported file type`); return; }
+      if (f.size > MAX_BYTES) { errs.push(`${f.name}: exceeds 5MB`); return; }
+      accepted.push(f);
     });
     if (errs.length) alert(errs.join("\n"));
-    onChange({ [target]: [...current, ...accepted] } as Partial<RegistrationData>);
+    onChange({ [target]: [...current, ...accepted] } as Partial<RegistrationDraft>);
   };
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-foreground">Upload documents</h2>
-      <p className="text-sm text-muted-foreground mt-1">
-        Files must be PDF, PNG, or JPG and under 5MB each.
-      </p>
-
+      <p className="text-sm text-muted-foreground mt-1">Files must be PDF, PNG, or JPG and under 5MB each.</p>
       <div className="mt-6 grid grid-cols-1 gap-6">
-        <Uploader
-          title="Certified ID Copy of Director(s)"
-          helper="Upload a certified copy for each director. Certification must be within the last 3 months."
-          files={idCopies}
-          onAdd={(fl) => handleFiles(fl, "idCopies", idCopies)}
-          onRemove={(i) =>
-            onChange({ idCopies: idCopies.filter((_, idx) => idx !== i) })
-          }
-        />
-        <Uploader
-          title="Proof of Address"
-          helper="A utility bill or bank statement, not older than 3 months."
-          files={proofOfAddress}
-          onAdd={(fl) => handleFiles(fl, "proofOfAddress", proofOfAddress)}
-          onRemove={(i) =>
-            onChange({
-              proofOfAddress: proofOfAddress.filter((_, idx) => idx !== i),
-            })
-          }
-        />
+        <Uploader title="Certified ID Copy of Director(s)" helper="Upload a certified copy for each director. Certification must be within the last 3 months." files={idCopies} onAdd={(fl) => handleFiles(fl, "idCopies", idCopies)} onRemove={(i) => onChange({ idCopies: idCopies.filter((_, idx) => idx !== i) })} />
+        <Uploader title="Proof of Address" helper="A utility bill or bank statement, not older than 3 months." files={proofOfAddress} onAdd={(fl) => handleFiles(fl, "proofOfAddress", proofOfAddress)} onRemove={(i) => onChange({ proofOfAddress: proofOfAddress.filter((_, idx) => idx !== i) })} />
       </div>
     </div>
   );
 }
 
-function Uploader({
-  title,
-  helper,
-  files,
-  onAdd,
-  onRemove,
-}: {
-  title: string;
-  helper: string;
-  files: UploadedFile[];
-  onAdd: (f: FileList | null) => void;
-  onRemove: (i: number) => void;
-}) {
+function Uploader({ title, helper, files, onAdd, onRemove }: { title: string; helper: string; files: File[]; onAdd: (f: FileList | null) => void; onRemove: (i: number) => void }) {
   const id = useMemo(() => `up-${Math.random().toString(36).slice(2, 9)}`, []);
   return (
     <div className="rounded-xl border border-border bg-surface/60 p-5">
       <div className="font-semibold text-foreground">{title}</div>
       <div className="text-xs text-muted-foreground mt-1">{helper}</div>
-
-      <label
-        htmlFor={id}
-        className="mt-4 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-4 py-8 cursor-pointer hover:bg-secondary transition"
-      >
+      <label htmlFor={id} className="mt-4 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-4 py-8 cursor-pointer hover:bg-secondary transition">
         <Upload className="h-5 w-5 text-muted-foreground" />
-        <div className="text-sm text-foreground font-medium">
-          Click to upload or drag and drop
-        </div>
+        <div className="text-sm text-foreground font-medium">Click to upload or drag and drop</div>
         <div className="text-xs text-muted-foreground">PDF, PNG, JPG — max 5MB</div>
-        <input
-          id={id}
-          type="file"
-          multiple
-          accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-          className="sr-only"
-          onChange={(e) => {
-            onAdd(e.target.files);
-            e.target.value = "";
-          }}
-        />
+        <input id={id} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" className="sr-only" onChange={(e) => { onAdd(e.target.files); e.target.value = ""; }} />
       </label>
-
       {files.length > 0 && (
         <ul className="mt-4 space-y-2">
           {files.map((f, i) => (
-            <li
-              key={`${f.name}-${i}`}
-              className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm"
-            >
+            <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm">
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="h-4 w-4 text-accent shrink-0" />
                 <span className="truncate text-foreground">{f.name}</span>
-                <span className="text-xs text-muted-foreground shrink-0">
-                  {(f.size / 1024).toFixed(0)} KB
-                </span>
+                <span className="text-xs text-muted-foreground shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
               </div>
-              <button
-                type="button"
-                onClick={() => onRemove(i)}
-                className="text-muted-foreground hover:text-destructive transition"
-                aria-label="Remove file"
-              >
+              <button type="button" onClick={() => onRemove(i)} className="text-muted-foreground hover:text-destructive transition" aria-label="Remove file">
                 <X className="h-4 w-4" />
               </button>
             </li>
@@ -448,28 +277,12 @@ function Uploader({
   );
 }
 
-/* ---------- shared ---------- */
+const inputCls = "w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition";
 
-const inputCls =
-  "w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition";
-
-function Field({
-  label,
-  required,
-  className,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, required, className, children }: { label: string; required?: boolean; className?: string; children: React.ReactNode }) {
   return (
     <label className={["block", className ?? ""].join(" ")}>
-      <span className="block text-sm font-medium text-foreground mb-1.5">
-        {label}
-        {required && <span className="text-destructive ml-0.5">*</span>}
-      </span>
+      <span className="block text-sm font-medium text-foreground mb-1.5">{label}{required && <span className="text-destructive ml-0.5">*</span>}</span>
       {children}
     </label>
   );
