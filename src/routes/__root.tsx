@@ -81,10 +81,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Vert Corp Group — CIPC Company Registration in South Africa" },
       { name: "description", content: "Fast, transparent CIPC company registration in South Africa by Vert Corp Group. All-inclusive flat fee, secure document handling." },
-      { property: "og:title", content: "Vert Corp Group — CIPC Company Registration" },
-      { property: "og:description", content: "Register your Pty (Ltd) with CIPC in minutes. Trusted South African service." },
+      { property: "og:title", content: "Vert Corp Group — CIPC Company Registration in South Africa" },
+      { property: "og:description", content: "Fast, transparent CIPC company registration in South Africa by Vert Corp Group. All-inclusive flat fee, secure document handling." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Vert Corp Group — CIPC Company Registration in South Africa" },
+      { name: "twitter:description", content: "Fast, transparent CIPC company registration in South Africa by Vert Corp Group. All-inclusive flat fee, secure document handling." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fa06d525-4b57-4bea-8854-ddbe4e41f7d3/id-preview-57dcccfd--d7858b9d-e72f-4df3-b7b9-eae5b2550d94.lovable.app-1782938137686.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fa06d525-4b57-4bea-8854-ddbe4e41f7d3/id-preview-57dcccfd--d7858b9d-e72f-4df3-b7b9-eae5b2550d94.lovable.app-1782938137686.png" },
     ],
     links: [
       {
