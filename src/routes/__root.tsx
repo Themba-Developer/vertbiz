@@ -8,9 +8,11 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider } from "@/lib/auth-context";
 
 function NotFoundComponent() {
   return (
@@ -77,14 +79,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Vert Corp Group — CIPC Company Registration in South Africa" },
+      { name: "description", content: "Fast, transparent CIPC company registration in South Africa by Vert Corp Group. All-inclusive flat fee, secure document handling." },
+      { property: "og:title", content: "Vert Corp Group — CIPC Company Registration" },
+      { property: "og:description", content: "Register your Pty (Ltd) with CIPC in minutes. Trusted South African service." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -118,8 +118,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthProvider>
+        <Toaster richColors position="top-right" />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

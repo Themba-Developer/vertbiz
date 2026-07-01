@@ -1,3 +1,7 @@
+// Client-side draft for the multi-step form. Files are kept in memory during
+// the session (they can't be serialized to localStorage), then uploaded to
+// Supabase Storage on final submission.
+
 export type Director = {
   id: string;
   fullNames: string;
@@ -8,23 +12,15 @@ export type Director = {
   address: string;
 };
 
-export type UploadedFile = {
-  name: string;
-  size: number;
-  type: string;
-};
-
-export type RegistrationData = {
+export type RegistrationDraft = {
   directors: Director[];
   proposedNames: [string, string, string, string];
-  idCopies: UploadedFile[];
-  proofOfAddress: UploadedFile[];
+  idCopies: File[];
+  proofOfAddress: File[];
   termsAccepted: boolean;
-  paymentRef?: string;
-  submittedAt?: string;
 };
 
-const KEY = "cipc-registration";
+const KEY = "vertcorp-registration-draft";
 
 export const emptyDirector = (): Director => ({
   id: crypto.randomUUID(),
@@ -36,7 +32,7 @@ export const emptyDirector = (): Director => ({
   address: "",
 });
 
-export const emptyRegistration = (): RegistrationData => ({
+export const emptyRegistration = (): RegistrationDraft => ({
   directors: [emptyDirector()],
   proposedNames: ["", "", "", ""],
   idCopies: [],
@@ -44,20 +40,25 @@ export const emptyRegistration = (): RegistrationData => ({
   termsAccepted: false,
 });
 
-export const loadRegistration = (): RegistrationData => {
+type Persisted = Omit<RegistrationDraft, "idCopies" | "proofOfAddress">;
+
+export const loadRegistration = (): RegistrationDraft => {
   if (typeof window === "undefined") return emptyRegistration();
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return emptyRegistration();
-    return { ...emptyRegistration(), ...JSON.parse(raw) };
+    const parsed: Persisted = JSON.parse(raw);
+    return { ...emptyRegistration(), ...parsed, idCopies: [], proofOfAddress: [] };
   } catch {
     return emptyRegistration();
   }
 };
 
-export const saveRegistration = (data: RegistrationData) => {
+export const saveRegistration = (data: RegistrationDraft) => {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(data));
+  const { idCopies, proofOfAddress, ...persist } = data;
+  void idCopies; void proofOfAddress;
+  window.localStorage.setItem(KEY, JSON.stringify(persist));
 };
 
 export const clearRegistration = () => {
