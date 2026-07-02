@@ -5,7 +5,6 @@ import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { SiteShell } from "@/components/SiteShell";
-import logoAsset from "@/assets/vertcorp-logo.png.asset.json";
 import { z } from "zod";
 
 export const Route = createFileRoute("/auth")({
@@ -92,7 +91,7 @@ function AuthPage() {
       <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           <div className="flex flex-col items-center mb-6">
-            <img src={logoAsset.url} alt="Vert Corp Group" className="h-16 w-16 object-contain" />
+            <img src="/logo.svg" alt="Vert Corp Group" className="h-16 w-16 object-contain" />
             <h1 className="mt-4 text-2xl font-bold text-foreground">
               {mode === "signup" ? "Create your account" : "Welcome back"}
             </h1>
