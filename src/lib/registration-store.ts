@@ -66,5 +66,5 @@ export const clearRegistration = () => {
   window.localStorage.removeItem(KEY);
 };
 
-export const REGISTRATION_FEE = 112.5;
-export const GOVERNMENT_FEE = 75;
+export const REGISTRATION_FEE = 749.99;
+export const CIPC_PAYFAST_URL = "https://payf.st/ox9ab";
