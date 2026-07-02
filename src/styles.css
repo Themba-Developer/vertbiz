@@ -138,3 +138,10 @@
     letter-spacing: -0.02em;
   }
 }
+#lovable-badge, 
+[id*="lovable"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
