@@ -91,7 +91,7 @@ function AuthPage() {
       <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           <div className="flex flex-col items-center mb-6">
-            <img src="/logo.svg" alt="Vert Corp Group" className="h-16 w-16 object-contain" />
+            <img src="/Logo_Official_1.png" alt="Vert Corp Group" className="h-16 w-16 object-contain" />
             <h1 className="mt-4 text-2xl font-bold text-foreground">
               {mode === "signup" ? "Create your account" : "Welcome back"}
             </h1>

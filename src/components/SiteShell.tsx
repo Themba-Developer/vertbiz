@@ -17,7 +17,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <header className="border-b border-border bg-card/60 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <img src="/logo.svg" alt="Vert Corp Group" className="h-10 w-10 object-contain" />
+            <img src="/Logo_Official_1.png" alt="Vert Corp Group" className="h-10 w-10 object-contain" />
             <div className="leading-tight">
               <div className="font-semibold text-foreground">Vert Corp Group</div>
               <div className="text-[11px] text-muted-foreground -mt-0.5">CIPC Registration Services</div>
