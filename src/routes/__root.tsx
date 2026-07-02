@@ -79,6 +79,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#1b1b2b" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Vert Corp" },
       { title: "Vert Corp Group — CIPC Company Registration in South Africa" },
       { name: "description", content: "Fast, transparent CIPC company registration in South Africa by Vert Corp Group. All-inclusive flat fee, secure document handling." },
       { property: "og:title", content: "Vert Corp Group — CIPC Company Registration in South Africa" },
@@ -91,10 +95,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fa06d525-4b57-4bea-8854-ddbe4e41f7d3/id-preview-57dcccfd--d7858b9d-e72f-4df3-b7b9-eae5b2550d94.lovable.app-1782938137686.png" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
