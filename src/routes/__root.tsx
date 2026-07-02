@@ -124,6 +124,14 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    let cancelled = false;
+    import("../lib/sw-register").then((m) => {
+      if (!cancelled) m.registerServiceWorker();
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -134,3 +142,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
