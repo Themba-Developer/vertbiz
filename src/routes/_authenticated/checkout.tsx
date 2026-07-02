@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Lock, ShieldCheck, ArrowLeft } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
-import { emptyRegistration, loadRegistration, clearRegistration, REGISTRATION_FEE, type RegistrationDraft } from "@/lib/registration-store";
+import { emptyRegistration, loadRegistration, clearRegistration, REGISTRATION_FEE, CIPC_PAYFAST_URL, type RegistrationDraft } from "@/lib/registration-store";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
@@ -84,8 +84,14 @@ function CheckoutPage() {
       }
 
       clearRegistration();
-      toast.success("Application submitted successfully");
-      navigate({ to: "/success", search: { id: app.id } });
+      toast.success("Application saved — redirecting to PayFast…");
+      // Redirect the user to PayFast to complete payment. On return they can
+      // find their application in the customer dashboard.
+      if (typeof window !== "undefined") {
+        window.location.href = CIPC_PAYFAST_URL;
+      } else {
+        navigate({ to: "/success", search: { id: app.id } });
+      }
     } catch (err) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : "Submission failed. Please try again.");

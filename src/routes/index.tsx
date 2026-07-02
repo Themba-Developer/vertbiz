@@ -1,14 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Building2, Check, Clock, FileCheck, ShieldCheck } from "lucide-react";
+import { Building2, Check, Clock, FileCheck, ShieldCheck, ArrowRight } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
+import { SERVICES } from "@/lib/services";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Vert Corp Group — Register Your South African Company in Minutes" },
-      { name: "description", content: "Fast, transparent CIPC company registration in South Africa. Name reservation and registration certificate included for R112.50." },
-      { property: "og:title", content: "Vert Corp Group — CIPC Company Registration in South Africa" },
-      { property: "og:description", content: "Register your Pty (Ltd) with CIPC in minutes. Flat fee of R112.50, fully online." },
+      { title: "Vert Corp Group — CIPC Registration & Business Compliance in SA" },
+      { name: "description", content: "Register your South African company, get CSD, SARS PIN, B-BBEE, business plans and more. Trusted compliance services from Vert Corp Group." },
+      { property: "og:title", content: "Vert Corp Group — CIPC Registration & Business Compliance" },
+      { property: "og:description", content: "CIPC registration from R749.99. CSD, SARS Tax PIN, B-BBEE, business plans and more — all in one place." },
     ],
   }),
   component: Landing,
@@ -20,10 +21,10 @@ function Landing() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div
-          className="absolute inset-0 -z-10 opacity-60"
+          className="absolute inset-0 -z-10 opacity-70"
           style={{
             background:
-              "radial-gradient(60% 60% at 50% 0%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 70%)",
+              "radial-gradient(60% 60% at 50% 0%, color-mix(in oklab, var(--color-accent) 22%, transparent), transparent 70%)",
           }}
         />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-20 pb-16 sm:pt-28 sm:pb-24 text-center">
@@ -32,31 +33,31 @@ function Landing() {
             CIPC-compliant • Trusted by South African founders
           </div>
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-foreground max-w-3xl mx-auto">
-            Register your South African company in minutes.
+            Register, comply, and grow — all in one place.
           </h1>
           <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto">
-            A simple, all-inclusive CIPC company registration service. Submit your details and documents online — we handle the paperwork.
+            From CIPC company registration to CSD, SARS Tax PINs, B-BBEE, business plans and feasibility studies — Vert Corp Group handles it end-to-end.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/register"
               className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground px-6 py-3 text-base font-semibold hover:opacity-90 transition shadow-elegant"
             >
-              Start Registration
+              Register a Company — R749.99
             </Link>
             <a
-              href="#pricing"
+              href="#services"
               className="inline-flex items-center justify-center rounded-md border border-border bg-card text-foreground px-6 py-3 text-base font-medium hover:bg-secondary transition"
             >
-              See pricing
+              See all services
             </a>
           </div>
 
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
             {[
-              { icon: Clock, title: "2–3 business days", desc: "Standard CIPC turnaround" },
-              { icon: FileCheck, title: "All documents included", desc: "Name reservation + COR14.3" },
-              { icon: ShieldCheck, title: "Secure & compliant", desc: "Encrypted document handling" },
+              { icon: Clock, title: "Fast turnaround", desc: "Most services in 2–5 business days" },
+              { icon: FileCheck, title: "Government-compliant", desc: "CIPC, SARS, NT-CSD & BEE ready" },
+              { icon: ShieldCheck, title: "Secure & confidential", desc: "Encrypted document handling" },
             ].map((f) => (
               <div key={f.title} className="rounded-xl border border-border bg-card p-4">
                 <f.icon className="h-5 w-5 text-accent" />
@@ -68,58 +69,77 @@ function Landing() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20 bg-surface border-y border-border">
+      {/* Services */}
+      <section id="services" className="py-20 bg-surface border-y border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Simple, transparent pricing</h2>
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Our services</h2>
             <p className="mt-3 text-muted-foreground">
-              One flat fee. No subscriptions, no surprises.
+              Transparent flat fees. Secure PayFast checkout. No hidden extras.
             </p>
           </div>
 
-          <div className="max-w-md mx-auto">
-            <div className="rounded-2xl border border-border bg-card shadow-card overflow-hidden">
-              <div className="bg-primary text-primary-foreground px-6 py-5">
-                <div className="flex items-center gap-2 text-sm opacity-80">
-                  <Building2 className="h-4 w-4" />
-                  Company Registration
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {SERVICES.map((s) => (
+              <div
+                key={s.id}
+                className={`relative rounded-2xl border bg-card shadow-card overflow-hidden flex flex-col ${
+                  s.primary ? "border-accent ring-1 ring-accent/40" : "border-border"
+                }`}
+              >
+                {s.primary && (
+                  <div className="absolute top-3 right-3 text-[10px] uppercase tracking-wide bg-accent text-accent-foreground px-2 py-1 rounded-full font-semibold">
+                    Most popular
+                  </div>
+                )}
+                <div className="px-5 pt-5 pb-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Building2 className="h-3.5 w-3.5" />
+                    Vert Corp Service
+                  </div>
+                  <h3 className="mt-2 text-lg font-semibold text-foreground leading-snug">{s.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{s.tagline}</p>
+                  <div className="mt-4 flex items-baseline gap-1.5">
+                    <span className="text-3xl font-bold text-foreground">{s.priceLabel}</span>
+                    <span className="text-xs text-muted-foreground">once-off</span>
+                  </div>
                 </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">R112.50</span>
-                  <span className="text-sm opacity-80">once-off</span>
+                <ul className="px-5 py-3 space-y-2 flex-1">
+                  {s.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-foreground">
+                      <span className="mt-0.5 h-4 w-4 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+                        <Check className="h-3 w-3 text-success" />
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="px-5 pb-5 pt-2">
+                  {s.hasIntakeForm ? (
+                    <Link
+                      to="/register"
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition"
+                    >
+                      Start Registration <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  ) : (
+                    <a
+                      href={s.payfastUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition"
+                    >
+                      Buy Now <ArrowRight className="h-4 w-4" />
+                    </a>
+                  )}
                 </div>
-                <div className="mt-1 text-xs opacity-80">All fees included — no extras</div>
               </div>
-              <ul className="px-6 py-6 space-y-3">
-                {[
-                  "CIPC name reservation",
-                  "Registration certificate (COR14.3)",
-                  "MOI lodgement (COR15.1A)",
-                  "Income tax registration with SARS",
-                  "Digital delivery of all documents",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-sm text-foreground">
-                    <span className="mt-0.5 h-5 w-5 rounded-full bg-success/15 flex items-center justify-center shrink-0">
-                      <Check className="h-3.5 w-3.5 text-success" />
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <div className="px-6 pb-6">
-                <Link
-                  to="/register"
-                  className="block text-center rounded-md bg-accent text-accent-foreground px-5 py-3 font-semibold hover:opacity-90 transition"
-                >
-                  Start Registration
-                </Link>
-                <p className="mt-3 text-[11px] text-muted-foreground text-center">
-                  Final approval subject to CIPC name availability.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
+
+          <p className="mt-8 text-center text-xs text-muted-foreground">
+            Payments are processed securely by PayFast. Final approvals subject to the relevant authority (CIPC, SARS, NT-CSD).
+          </p>
         </div>
       </section>
 
@@ -129,10 +149,10 @@ function Landing() {
           <h2 className="text-3xl font-bold text-foreground text-center">How it works</h2>
           <div className="mt-10 grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
-              { n: 1, t: "Enter director details", d: "Tell us who's behind the company." },
-              { n: 2, t: "Choose 4 names", d: "We submit them to CIPC in order of preference." },
-              { n: 3, t: "Upload documents", d: "Certified IDs and proof of address." },
-              { n: 4, t: "Pay & relax", d: "We handle CIPC lodgement and updates." },
+              { n: 1, t: "Pick a service", d: "Choose the compliance product you need." },
+              { n: 2, t: "Submit your details", d: "Complete the short online intake." },
+              { n: 3, t: "Pay securely", d: "Instant PayFast checkout in ZAR." },
+              { n: 4, t: "We handle the rest", d: "Documents delivered digitally to you." },
             ].map((s) => (
               <div key={s.n} className="rounded-xl border border-border bg-card p-5">
                 <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
