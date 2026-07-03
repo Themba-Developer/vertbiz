@@ -22,6 +22,11 @@ export type RegistrationDraft = {
 
 const KEY = "vertcorp-registration-draft";
 
+let sessionFiles: Pick<RegistrationDraft, "idCopies" | "proofOfAddress"> = {
+  idCopies: [],
+  proofOfAddress: [],
+};
+
 export const emptyDirector = (): Director => ({
   id: crypto.randomUUID(),
   fullNames: "",
@@ -43,26 +48,33 @@ export const emptyRegistration = (): RegistrationDraft => ({
 type Persisted = Omit<RegistrationDraft, "idCopies" | "proofOfAddress">;
 
 export const loadRegistration = (): RegistrationDraft => {
+  const withSessionFiles = (draft: RegistrationDraft): RegistrationDraft => ({
+    ...draft,
+    idCopies: sessionFiles.idCopies,
+    proofOfAddress: sessionFiles.proofOfAddress,
+  });
+
   if (typeof window === "undefined") return emptyRegistration();
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (!raw) return emptyRegistration();
+    if (!raw) return withSessionFiles(emptyRegistration());
     const parsed: Persisted = JSON.parse(raw);
-    return { ...emptyRegistration(), ...parsed, idCopies: [], proofOfAddress: [] };
+    return withSessionFiles({ ...emptyRegistration(), ...parsed });
   } catch {
-    return emptyRegistration();
+    return withSessionFiles(emptyRegistration());
   }
 };
 
 export const saveRegistration = (data: RegistrationDraft) => {
   if (typeof window === "undefined") return;
   const { idCopies, proofOfAddress, ...persist } = data;
-  void idCopies; void proofOfAddress;
+  sessionFiles = { idCopies, proofOfAddress };
   window.localStorage.setItem(KEY, JSON.stringify(persist));
 };
 
 export const clearRegistration = () => {
   if (typeof window === "undefined") return;
+  sessionFiles = { idCopies: [], proofOfAddress: [] };
   window.localStorage.removeItem(KEY);
 };
 
