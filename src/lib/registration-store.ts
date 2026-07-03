@@ -1,7 +1,3 @@
-// Client-side draft for the multi-step form. Files are kept in memory during
-// the session (they can't be serialized to localStorage), then uploaded to
-// Supabase Storage on final submission.
-
 export type Director = {
   id: string;
   fullNames: string;
@@ -13,18 +9,21 @@ export type Director = {
 };
 
 export type RegistrationDraft = {
+  serviceId?: string;
   directors: Director[];
   proposedNames: [string, string, string, string];
   idCopies: File[];
   proofOfAddress: File[];
+  directorIdFiles: File[];
   termsAccepted: boolean;
 };
 
 const KEY = "vertcorp-registration-draft";
 
-let sessionFiles: Pick<RegistrationDraft, "idCopies" | "proofOfAddress"> = {
+let sessionFiles: Pick<RegistrationDraft, "idCopies" | "proofOfAddress" | "directorIdFiles"> = {
   idCopies: [],
   proofOfAddress: [],
+  directorIdFiles: [],
 };
 
 export const emptyDirector = (): Director => ({
@@ -42,16 +41,18 @@ export const emptyRegistration = (): RegistrationDraft => ({
   proposedNames: ["", "", "", ""],
   idCopies: [],
   proofOfAddress: [],
+  directorIdFiles: [],
   termsAccepted: false,
 });
 
-type Persisted = Omit<RegistrationDraft, "idCopies" | "proofOfAddress">;
+type Persisted = Omit<RegistrationDraft, "idCopies" | "proofOfAddress" | "directorIdFiles">;
 
 export const loadRegistration = (): RegistrationDraft => {
   const withSessionFiles = (draft: RegistrationDraft): RegistrationDraft => ({
     ...draft,
     idCopies: sessionFiles.idCopies,
     proofOfAddress: sessionFiles.proofOfAddress,
+    directorIdFiles: sessionFiles.directorIdFiles,
   });
 
   if (typeof window === "undefined") return emptyRegistration();
@@ -67,14 +68,14 @@ export const loadRegistration = (): RegistrationDraft => {
 
 export const saveRegistration = (data: RegistrationDraft) => {
   if (typeof window === "undefined") return;
-  const { idCopies, proofOfAddress, ...persist } = data;
-  sessionFiles = { idCopies, proofOfAddress };
+  const { idCopies, proofOfAddress, directorIdFiles, ...persist } = data;
+  sessionFiles = { idCopies, proofOfAddress, directorIdFiles };
   window.localStorage.setItem(KEY, JSON.stringify(persist));
 };
 
 export const clearRegistration = () => {
   if (typeof window === "undefined") return;
-  sessionFiles = { idCopies: [], proofOfAddress: [] };
+  sessionFiles = { idCopies: [], proofOfAddress: [], directorIdFiles: [] };
   window.localStorage.removeItem(KEY);
 };
 

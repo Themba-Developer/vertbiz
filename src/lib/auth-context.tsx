@@ -21,7 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
       setSession(s);
       if (s?.user) {
-        // Defer role fetch to avoid deadlocks
         setTimeout(() => fetchRole(s.user.id), 0);
       } else {
         setIsAdmin(false);

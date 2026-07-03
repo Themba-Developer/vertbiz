@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, FileText, CheckCircle2 } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
 import { emptyRegistration, loadRegistration, saveRegistration, REGISTRATION_FEE, type RegistrationDraft } from "@/lib/registration-store";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/summary")({
   head: () => ({
     meta: [
       { title: "Review Your Application — Vert Corp Group" },
-      { name: "description", content: "Review your CIPC company registration details before payment." },
+      { name: "description", content: "Review your company registration details before payment." },
     ],
   }),
   component: SummaryPage,
@@ -24,7 +25,19 @@ function SummaryPage() {
 
   const toggleTerms = () => setData((d) => ({ ...d, termsAccepted: !d.termsAccepted }));
 
-  const hasFiles = data.idCopies.length > 0 && data.proofOfAddress.length > 0;
+  const hasFiles = data.idCopies.length > 0 && data.proofOfAddress.length > 0 && data.directorIdFiles.length > 0;
+
+  const handleCheckout = () => {
+    if (!data.termsAccepted) {
+      toast.error("Please accept the terms and conditions");
+      return;
+    }
+    if (!hasFiles) {
+      toast.error("All required documents must be uploaded");
+      return;
+    }
+    navigate({ to: "/checkout" });
+  };
 
   return (
     <SiteShell>
@@ -32,7 +45,7 @@ function SummaryPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Review your application</h1>
-            <p className="text-muted-foreground text-sm mt-1">Check everything carefully — these details will be submitted to CIPC.</p>
+            <p className="text-muted-foreground text-sm mt-1">Check everything carefully — these details will be processed by our team.</p>
           </div>
           <Link to="/register" className="hidden sm:inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-secondary transition">
             <ArrowLeft className="h-4 w-4" /> Edit
@@ -41,7 +54,7 @@ function SummaryPage() {
 
         {!hasFiles && (
           <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/5 text-destructive p-4 text-sm">
-            Your uploaded files are not available in this browser session. Please <Link to="/register" className="underline font-semibold">go back and re-upload</Link> your documents before continuing to payment.
+            All required documents must be uploaded. Please <Link to="/register" className="underline font-semibold">go back and complete</Link> the document uploads.
           </div>
         )}
 
@@ -75,24 +88,25 @@ function SummaryPage() {
           </Section>
 
           <Section title="Uploaded documents">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <DocList title="Certified ID copies" files={data.idCopies} />
+              <DocList title="Director's ID" files={data.directorIdFiles} />
               <DocList title="Proof of address" files={data.proofOfAddress} />
             </div>
           </Section>
 
           <Section title="Fee summary">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">CIPC Registration Fee & Service Fee</span>
+              <span className="text-muted-foreground">Registration Fee & Service Fee</span>
               <span className="font-semibold text-foreground">R{REGISTRATION_FEE.toFixed(2)}</span>
             </div>
           </Section>
 
           <div className="rounded-xl border border-border bg-card p-5">
             <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={data.termsAccepted} onChange={toggleTerms} className="mt-1 h-4 w-4 rounded border-input accent-[var(--color-accent)]" />
+              <input type="checkbox" checked={data.termsAccepted} onChange={toggleTerms} className="mt-1 h-4 w-4 rounded border-input" />
               <span className="text-sm text-foreground">
-                I understand that proposed company names are subject to CIPC availability and approval, and that processing typically takes <strong>2–3 business days</strong>. I accept the terms and conditions of this service.
+                I confirm that all information provided is accurate and complete. I authorize Vert Corp Group to process this application and submit it to relevant authorities. I understand that any false information may result in rejection and legal consequences.
               </span>
             </label>
           </div>
@@ -101,7 +115,7 @@ function SummaryPage() {
             <Link to="/register" className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition">
               <ArrowLeft className="h-4 w-4" /> Back to edit
             </Link>
-            <button type="button" disabled={!data.termsAccepted || !hasFiles} onClick={() => navigate({ to: "/checkout" })} className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground px-6 py-3 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <button type="button" disabled={!hasFiles || !data.termsAccepted} onClick={handleCheckout} className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground disabled:opacity-60 disabled:cursor-not-allowed px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition">
               <CheckCircle2 className="h-4 w-4" /> Confirm & Continue to Payment
             </button>
           </div>

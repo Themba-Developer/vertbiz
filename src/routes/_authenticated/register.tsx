@@ -11,12 +11,13 @@ import {
   type Director,
   type RegistrationDraft,
 } from "@/lib/registration-store";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/_authenticated/register")({
   head: () => ({
     meta: [
       { title: "Register Your Company — Vert Corp Group" },
-      { name: "description", content: "Complete your CIPC company registration online: director details, proposed names, and documents." },
+      { name: "description", content: "Complete your company registration online: director details, proposed names, and documents." },
     ],
   }),
   component: RegisterPage,
@@ -33,6 +34,7 @@ const ACCEPTED = ["application/pdf", "image/png", "image/jpeg"];
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [data, setData] = useState<RegistrationDraft>(emptyRegistration());
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<string[]>([]);
@@ -73,6 +75,7 @@ function RegisterPage() {
     if (step === 3) {
       if (data.idCopies.length === 0) errs.push("At least one certified ID copy is required.");
       if (data.proofOfAddress.length === 0) errs.push("Proof of address is required.");
+      if (data.directorIdFiles.length === 0) errs.push("Director's ID upload is required.");
     }
     return errs;
   };
@@ -119,6 +122,7 @@ function RegisterPage() {
             <DocumentsStep
               idCopies={data.idCopies}
               proofOfAddress={data.proofOfAddress}
+              directorIdFiles={data.directorIdFiles}
               onChange={(partial) => update(partial)}
             />
           )}
@@ -182,14 +186,14 @@ function DirectorsStep({ directors, onChange }: { directors: Director[]; onChang
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Full names"><input type="text" value={d.fullNames} onChange={(e) => setOne(d.id, { fullNames: e.target.value })} className={inputCls} placeholder="e.g. Thandiwe Nomsa" /></Field>
               <Field label="Surname"><input type="text" value={d.surname} onChange={(e) => setOne(d.id, { surname: e.target.value })} className={inputCls} placeholder="e.g. Mokoena" /></Field>
-              <Field label="South African ID number"><input type="text" inputMode="numeric" maxLength={13} value={d.idNumber} onChange={(e) => setOne(d.id, { idNumber: e.target.value.replace(/\D/g, "") })} className={inputCls} placeholder="13 digits" /></Field>
+              <Field label="South African ID number"><input type="text" inputMode="numeric" maxLength={13} value={d.idNumber} onChange={(e) => setOne(d.id, { idNumber: e.target.value.replace(/\D/g, "") })} className={inputCls} placeholder="13-digit ID" /></Field>
               <Field label="Email address"><input type="email" value={d.email} onChange={(e) => setOne(d.id, { email: e.target.value })} className={inputCls} placeholder="name@email.com" /></Field>
               <Field label="Phone number"><input type="tel" value={d.phone} onChange={(e) => setOne(d.id, { phone: e.target.value })} className={inputCls} placeholder="082 123 4567" /></Field>
-              <Field label="Physical address" className="sm:col-span-2"><textarea rows={2} value={d.address} onChange={(e) => setOne(d.id, { address: e.target.value })} className={inputCls} placeholder="Street, suburb, city, postal code" /></Field>
+              <Field label="Physical address" className="sm:col-span-2"><textarea rows={2} value={d.address} onChange={(e) => setOne(d.id, { address: e.target.value })} className={inputCls} placeholder="Street address, suburb, city" /></Field>
             </div>
           </div>
         ))}
-        <button type="button" onClick={() => onChange([...directors, emptyDirector()])} className="inline-flex items-center gap-2 rounded-md border border-dashed border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition w-full justify-center">
+        <button type="button" onClick={() => onChange([...directors, emptyDirector()])} className="inline-flex items-center gap-2 rounded-md border border-dashed border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition">
           <Plus className="h-4 w-4" /> Add Another Director
         </button>
       </div>
@@ -207,7 +211,7 @@ function NamesStep({ names, onChange }: { names: [string, string, string, string
   return (
     <div>
       <h2 className="text-2xl font-bold text-foreground">Proposed company names</h2>
-      <p className="text-sm text-muted-foreground mt-1">CIPC requires up to 4 proposed names. We submit them in the order you provide.</p>
+      <p className="text-sm text-muted-foreground mt-1">We require up to 4 proposed names and submit them in the order you provide.</p>
       <div className="mt-6 space-y-4">
         {labels.map((label, i) => (
           <Field key={label} label={label} required={i === 0}>
@@ -219,8 +223,8 @@ function NamesStep({ names, onChange }: { names: [string, string, string, string
   );
 }
 
-function DocumentsStep({ idCopies, proofOfAddress, onChange }: { idCopies: File[]; proofOfAddress: File[]; onChange: (p: Partial<RegistrationDraft>) => void }) {
-  const handleFiles = (files: FileList | null, target: "idCopies" | "proofOfAddress", current: File[]) => {
+function DocumentsStep({ idCopies, proofOfAddress, directorIdFiles, onChange }: { idCopies: File[]; proofOfAddress: File[]; directorIdFiles: File[]; onChange: (p: Partial<RegistrationDraft>) => void }) {
+  const handleFiles = (files: FileList | null, target: "idCopies" | "proofOfAddress" | "directorIdFiles", current: File[]) => {
     if (!files) return;
     const accepted: File[] = [];
     const errs: string[] = [];
@@ -239,6 +243,7 @@ function DocumentsStep({ idCopies, proofOfAddress, onChange }: { idCopies: File[
       <p className="text-sm text-muted-foreground mt-1">Files must be PDF, PNG, or JPG and under 5MB each.</p>
       <div className="mt-6 grid grid-cols-1 gap-6">
         <Uploader title="Certified ID Copy of Director(s)" helper="Upload a certified copy for each director. Certification must be within the last 3 months." files={idCopies} onAdd={(fl) => handleFiles(fl, "idCopies", idCopies)} onRemove={(i) => onChange({ idCopies: idCopies.filter((_, idx) => idx !== i) })} />
+        <Uploader title="Director's ID (Original or Certified)" helper="Required for all directors. Upload their original SA ID or certified copy." files={directorIdFiles} onAdd={(fl) => handleFiles(fl, "directorIdFiles", directorIdFiles)} onRemove={(i) => onChange({ directorIdFiles: directorIdFiles.filter((_, idx) => idx !== i) })} />
         <Uploader title="Proof of Address" helper="A utility bill or bank statement, not older than 3 months." files={proofOfAddress} onAdd={(fl) => handleFiles(fl, "proofOfAddress", proofOfAddress)} onRemove={(i) => onChange({ proofOfAddress: proofOfAddress.filter((_, idx) => idx !== i) })} />
       </div>
     </div>
@@ -277,7 +282,7 @@ function Uploader({ title, helper, files, onAdd, onRemove }: { title: string; he
   );
 }
 
-const inputCls = "w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition";
+const inputCls = "w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent";
 
 function Field({ label, required, className, children }: { label: string; required?: boolean; className?: string; children: React.ReactNode }) {
   return (

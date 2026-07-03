@@ -7,7 +7,6 @@ export type Service = {
   payfastUrl: string;
   features: string[];
   primary?: boolean;
-  /** If true, uses the internal registration form flow before payment. */
   hasIntakeForm?: boolean;
 };
 
@@ -36,6 +35,7 @@ export const SERVICES: Service[] = [
     price: 349.99,
     priceLabel: "R349.99",
     payfastUrl: "https://payf.st/jalzc",
+    hasIntakeForm: true,
     features: ["Full CSD profile setup", "MAAA supplier number", "Ready to bid on tenders"],
   },
   {
@@ -45,6 +45,7 @@ export const SERVICES: Service[] = [
     price: 199,
     priceLabel: "R199",
     payfastUrl: "https://payf.st/w73bz",
+    hasIntakeForm: true,
     features: ["Official Tax Compliance Status PIN", "Delivered digitally", "Required for tenders & contracts"],
   },
   {
@@ -63,6 +64,7 @@ export const SERVICES: Service[] = [
     price: 2999,
     priceLabel: "R2,999",
     payfastUrl: "https://payf.st/i15j4",
+    hasIntakeForm: true,
     features: ["PBO application to SARS", "Section 18A eligibility", "Tax exemption benefits"],
   },
   {
@@ -90,11 +92,7 @@ export const SERVICES: Service[] = [
     price: 16299,
     priceLabel: "R16,299",
     payfastUrl: "https://payf.st/znokr",
-    features: [
-      "Comprehensive market research",
-      "Financial modelling & risk analysis",
-      "Detailed written report",
-    ],
+    features: ["Comprehensive market research", "Financial modelling & risk analysis", "Detailed written report"],
   },
 ];
 
