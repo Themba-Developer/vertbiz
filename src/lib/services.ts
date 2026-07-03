@@ -8,6 +8,8 @@ export type Service = {
   features: string[];
   primary?: boolean;
   hasIntakeForm?: boolean;
+  requiresProposedNames?: boolean;
+  requiredDocuments?: string[];
 };
 
 export const SERVICES: Service[] = [
@@ -20,6 +22,8 @@ export const SERVICES: Service[] = [
     payfastUrl: "https://payf.st/ox9ab",
     hasIntakeForm: true,
     primary: true,
+    requiresProposedNames: true,
+    requiredDocuments: ["director_id_copies", "cor14_3"],
     features: [
       "CIPC name reservation",
       "Registration certificate (COR14.3)",
@@ -36,6 +40,8 @@ export const SERVICES: Service[] = [
     priceLabel: "R349.99",
     payfastUrl: "https://payf.st/jalzc",
     hasIntakeForm: true,
+    requiresProposedNames: false,
+    requiredDocuments: ["id_copy", "cor14_3"],
     features: ["Full CSD profile setup", "MAAA supplier number", "Ready to bid on tenders"],
   },
   {
@@ -46,6 +52,8 @@ export const SERVICES: Service[] = [
     priceLabel: "R199",
     payfastUrl: "https://payf.st/w73bz",
     hasIntakeForm: true,
+    requiresProposedNames: false,
+    requiredDocuments: ["id_copy", "cor14_3"],
     features: ["Official Tax Compliance Status PIN", "Delivered digitally", "Required for tenders & contracts"],
   },
   {
@@ -55,6 +63,9 @@ export const SERVICES: Service[] = [
     price: 249.99,
     priceLabel: "R249.99",
     payfastUrl: "https://payf.st/bjv5s",
+    hasIntakeForm: true,
+    requiresProposedNames: false,
+    requiredDocuments: ["id_copy", "cor14_3"],
     features: ["Signed & commissioned affidavit", "For EMEs under R10m turnover", "Valid for 12 months"],
   },
   {
@@ -65,6 +76,8 @@ export const SERVICES: Service[] = [
     priceLabel: "R2,999",
     payfastUrl: "https://payf.st/i15j4",
     hasIntakeForm: true,
+    requiresProposedNames: false,
+    requiredDocuments: ["id_copy", "cor14_3"],
     features: ["PBO application to SARS", "Section 18A eligibility", "Tax exemption benefits"],
   },
   {
@@ -74,6 +87,9 @@ export const SERVICES: Service[] = [
     price: 249,
     priceLabel: "R249",
     payfastUrl: "https://payf.st/4nhbq",
+    hasIntakeForm: true,
+    requiresProposedNames: false,
+    requiredDocuments: ["id_copy", "cor14_3"],
     features: ["Custom-designed PDF profile", "Editable brand template", "Ready for proposals & tenders"],
   },
   {
@@ -83,6 +99,9 @@ export const SERVICES: Service[] = [
     price: 2499,
     priceLabel: "R2,499",
     payfastUrl: "https://payf.st/hcg75",
+    hasIntakeForm: true,
+    requiresProposedNames: false,
+    requiredDocuments: ["id_copy", "cor14_3"],
     features: ["Executive summary & market analysis", "3-year financial projections", "Bank & investor ready format"],
   },
   {
@@ -92,7 +111,14 @@ export const SERVICES: Service[] = [
     price: 16299,
     priceLabel: "R16,299",
     payfastUrl: "https://payf.st/znokr",
-    features: ["Comprehensive market research", "Financial modelling & risk analysis", "Detailed written report"],
+    hasIntakeForm: true,
+    requiresProposedNames: false,
+    requiredDocuments: ["id_copy", "cor14_3"],
+    features: [
+      "Comprehensive market research",
+      "Financial modelling & risk analysis",
+      "Detailed written report",
+    ],
   },
 ];
 
