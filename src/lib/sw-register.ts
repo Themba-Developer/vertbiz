@@ -1,7 +1,9 @@
 // Guarded service worker registration. Registers only in production browser
 // contexts — never in Lovable preview, dev, or inside an iframe.
 
-const SW_URL = "/sw.js";
+const baseUrl = import.meta.env.BASE_URL || "/";
+const SW_SCOPE = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+const SW_URL = `${SW_SCOPE}sw.js`;
 
 function shouldSkipRegistration(): boolean {
   if (typeof window === "undefined") return true;
@@ -26,7 +28,7 @@ async function unregisterMatching() {
   const regs = await navigator.serviceWorker.getRegistrations();
   for (const r of regs) {
     const url = r.active?.scriptURL || r.installing?.scriptURL || r.waiting?.scriptURL || "";
-    if (url.endsWith(SW_URL)) {
+    if (url.endsWith("/sw.js") || url.endsWith(SW_URL)) {
       try { await r.unregister(); } catch { /* ignore */ }
     }
   }
@@ -38,7 +40,7 @@ export function registerServiceWorker() {
     return;
   }
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register(SW_URL, { scope: "/" }).catch((err) => {
+    navigator.serviceWorker.register(SW_URL, { scope: SW_SCOPE }).catch((err) => {
       console.warn("[sw] registration failed", err);
     });
   });

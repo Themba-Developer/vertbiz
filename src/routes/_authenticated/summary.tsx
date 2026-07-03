@@ -41,7 +41,7 @@ function SummaryPage() {
 
         {!hasFiles && (
           <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/5 text-destructive p-4 text-sm">
-            Your uploaded files were cleared (this happens if the page was refreshed). Please <Link to="/register" className="underline font-semibold">go back and re-upload</Link> your documents before continuing to payment.
+            Your uploaded files are not available in this browser session. Please <Link to="/register" className="underline font-semibold">go back and re-upload</Link> your documents before continuing to payment.
           </div>
         )}
 
