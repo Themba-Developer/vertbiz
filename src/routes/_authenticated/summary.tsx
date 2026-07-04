@@ -2,14 +2,20 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, FileText, CheckCircle2 } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
-import { emptyRegistration, loadRegistration, saveRegistration, REGISTRATION_FEE, type RegistrationDraft } from "@/lib/registration-store";
+import {
+  emptyRegistration,
+  loadRegistration,
+  saveRegistration,
+  type RegistrationDraft,
+} from "@/lib/registration-store";
+import { getService } from "@/lib/services";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/summary")({
   head: () => ({
     meta: [
       { title: "Review Your Application — Vert Corp Group" },
-      { name: "description", content: "Review your company registration details before payment." },
+      { name: "description", content: "Review your details before payment." },
     ],
   }),
   component: SummaryPage,
@@ -20,12 +26,21 @@ function SummaryPage() {
   const [data, setData] = useState<RegistrationDraft>(emptyRegistration());
   const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => { setData(loadRegistration()); setHydrated(true); }, []);
-  useEffect(() => { if (hydrated) saveRegistration(data); }, [data, hydrated]);
+  useEffect(() => {
+    setData(loadRegistration());
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (hydrated) saveRegistration(data);
+  }, [data, hydrated]);
 
   const toggleTerms = () => setData((d) => ({ ...d, termsAccepted: !d.termsAccepted }));
 
-  const hasFiles = data.idCopies.length > 0 && data.proofOfAddress.length > 0 && data.directorIdFiles.length > 0;
+  const service = data.serviceId ? getService(data.serviceId) : getService("cipc");
+  const isCipc = service?.id === "cipc";
+  const hasFiles = isCipc
+    ? data.directorIdFiles.length > 0
+    : data.idCopies.length > 0 && data.proofOfAddress.length > 0;
 
   const handleCheckout = () => {
     if (!data.termsAccepted) {
@@ -45,16 +60,26 @@ function SummaryPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Review your application</h1>
-            <p className="text-muted-foreground text-sm mt-1">Check everything carefully — these details will be processed by our team.</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              {service?.name} — check everything carefully before payment.
+            </p>
           </div>
-          <Link to="/register" className="hidden sm:inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-secondary transition">
+          <Link
+            to="/register"
+            search={{ serviceId: service?.id }}
+            className="hidden sm:inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-secondary transition"
+          >
             <ArrowLeft className="h-4 w-4" /> Edit
           </Link>
         </div>
 
         {!hasFiles && (
           <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/5 text-destructive p-4 text-sm">
-            All required documents must be uploaded. Please <Link to="/register" className="underline font-semibold">go back and complete</Link> the document uploads.
+            All required documents must be uploaded.{" "}
+            <Link to="/register" search={{ serviceId: service?.id }} className="underline font-semibold">
+              Go back and complete
+            </Link>{" "}
+            the document uploads.
           </div>
         )}
 
@@ -63,7 +88,9 @@ function SummaryPage() {
             <div className="grid gap-4">
               {data.directors.map((d, i) => (
                 <div key={d.id} className="rounded-lg border border-border p-4">
-                  <div className="font-semibold text-foreground mb-2">Director {i + 1}: {d.fullNames} {d.surname}</div>
+                  <div className="font-semibold text-foreground mb-2">
+                    Director {i + 1}: {d.fullNames} {d.surname}
+                  </div>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
                     <Row k="ID Number" v={d.idNumber} />
                     <Row k="Email" v={d.email} />
@@ -75,47 +102,74 @@ function SummaryPage() {
             </div>
           </Section>
 
-          <Section title="Proposed company names">
-            <ol className="space-y-2 text-sm">
-              {data.proposedNames.map((n, i) => (
-                <li key={i} className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
-                  <span className="text-xs font-semibold text-muted-foreground w-6">#{i + 1}</span>
-                  <span className="text-foreground">{n || <span className="text-muted-foreground italic">Not provided</span>}</span>
-                  {i === 0 && <span className="ml-auto text-[10px] uppercase tracking-wide bg-accent/15 text-accent-foreground px-2 py-0.5 rounded">Preferred</span>}
-                </li>
-              ))}
-            </ol>
-          </Section>
+          {isCipc && (
+            <Section title="Proposed company names">
+              <ol className="space-y-2 text-sm">
+                {data.proposedNames.map((n, i) => (
+                  <li key={i} className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
+                    <span className="text-xs font-semibold text-muted-foreground w-6">#{i + 1}</span>
+                    <span className="text-foreground">
+                      {n || <span className="text-muted-foreground italic">Not provided</span>}
+                    </span>
+                    {i === 0 && (
+                      <span className="ml-auto text-[10px] uppercase tracking-wide bg-accent/15 text-accent-foreground px-2 py-0.5 rounded">
+                        Preferred
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </Section>
+          )}
 
           <Section title="Uploaded documents">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <DocList title="Certified ID copies" files={data.idCopies} />
-              <DocList title="Director's ID" files={data.directorIdFiles} />
-              <DocList title="Proof of address" files={data.proofOfAddress} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {isCipc ? (
+                <DocList title="All Director ID Copies" files={data.directorIdFiles} />
+              ) : (
+                <>
+                  <DocList title="ID Copy" files={data.idCopies} />
+                  <DocList title="CIPC COR14.3" files={data.proofOfAddress} />
+                </>
+              )}
             </div>
           </Section>
 
           <Section title="Fee summary">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Registration Fee & Service Fee</span>
-              <span className="font-semibold text-foreground">R{REGISTRATION_FEE.toFixed(2)}</span>
+              <span className="text-muted-foreground">{service?.name} Fee</span>
+              <span className="font-semibold text-foreground">{service?.priceLabel}</span>
             </div>
           </Section>
 
           <div className="rounded-xl border border-border bg-card p-5">
             <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={data.termsAccepted} onChange={toggleTerms} className="mt-1 h-4 w-4 rounded border-input" />
+              <input
+                type="checkbox"
+                checked={data.termsAccepted}
+                onChange={toggleTerms}
+                className="mt-1 h-4 w-4 rounded border-input"
+              />
               <span className="text-sm text-foreground">
-                I confirm that all information provided is accurate and complete. I authorize Vert Corp Group to process this application and submit it to relevant authorities. I understand that any false information may result in rejection and legal consequences.
+                I confirm all information is accurate and authorize Vert Corp Group to process this application.
               </span>
             </label>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-between">
-            <Link to="/register" className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition">
+            <Link
+              to="/register"
+              search={{ serviceId: service?.id }}
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition"
+            >
               <ArrowLeft className="h-4 w-4" /> Back to edit
             </Link>
-            <button type="button" disabled={!hasFiles || !data.termsAccepted} onClick={handleCheckout} className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground disabled:opacity-60 disabled:cursor-not-allowed px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition">
+            <button
+              type="button"
+              disabled={!hasFiles || !data.termsAccepted}
+              onClick={handleCheckout}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground disabled:opacity-60 disabled:cursor-not-allowed px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition"
+            >
               <CheckCircle2 className="h-4 w-4" /> Confirm & Continue to Payment
             </button>
           </div>
@@ -134,13 +188,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 function Row({ k, v }: { k: string; v: string }) {
-  return (<div className="flex gap-2"><dt className="text-muted-foreground w-24 shrink-0">{k}</dt><dd className="text-foreground break-words">{v || "—"}</dd></div>);
+  return (
+    <div className="flex gap-2">
+      <dt className="text-muted-foreground w-24 shrink-0">{k}</dt>
+      <dd className="text-foreground break-words">{v || "—"}</dd>
+    </div>
+  );
 }
 function DocList({ title, files }: { title: string; files: File[] }) {
   return (
     <div>
       <div className="text-sm font-medium text-foreground mb-2">{title}</div>
-      {files.length === 0 ? (<div className="text-sm text-muted-foreground">No files uploaded.</div>) : (
+      {files.length === 0 ? (
+        <div className="text-sm text-muted-foreground">No files uploaded.</div>
+      ) : (
         <ul className="space-y-1.5">
           {files.map((f, i) => (
             <li key={i} className="flex items-center gap-2 text-sm rounded-md border border-border px-3 py-2">

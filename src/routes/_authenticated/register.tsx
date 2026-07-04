@@ -95,10 +95,12 @@ function RegisterPage() {
     // Documents step
     const docStep = service?.requiresProposedNames ? 3 : 2;
     if (step === docStep) {
-      if (data.idCopies.length === 0) errs.push("At least one ID copy is required.");
-      if (data.proofOfAddress.length === 0) errs.push("Proof of address (COR14.3) is required.");
-      if (service?.id === "cipc" && data.directorIdFiles.length === 0) {
-        errs.push("Director's ID copies are required.");
+      if (service?.id === "cipc") {
+        if (data.directorIdFiles.length === 0)
+          errs.push("Please upload all Director ID copies.");
+      } else {
+        if (data.idCopies.length === 0) errs.push("Please upload your ID Copy.");
+        if (data.proofOfAddress.length === 0) errs.push("Please upload the CIPC COR14.3 document.");
       }
     }
     return errs;
@@ -354,34 +356,32 @@ function DocumentsStep({
       <h2 className="text-2xl font-bold text-foreground">Upload documents</h2>
       <p className="text-sm text-muted-foreground mt-1">Files must be PDF, PNG, or JPG and under 5MB each.</p>
       <div className="mt-6 grid grid-cols-1 gap-6">
-        {/* Only for CIPC: All Director ID Copies */}
-        {serviceId === "cipc" && (
+        {serviceId === "cipc" ? (
           <Uploader
             title="All Director ID Copies"
-            helper="Upload certified copies for all directors. Certification must be within the last 3 months."
+            helper="Upload certified copies for every director listed above."
             files={directorIdFiles}
             onAdd={(fl) => handleFiles(fl, "directorIdFiles", directorIdFiles)}
             onRemove={(i) => onChange({ directorIdFiles: directorIdFiles.filter((_, idx) => idx !== i) })}
           />
+        ) : (
+          <>
+            <Uploader
+              title="ID Copy"
+              helper="Your valid South African ID or passport copy."
+              files={idCopies}
+              onAdd={(fl) => handleFiles(fl, "idCopies", idCopies)}
+              onRemove={(i) => onChange({ idCopies: idCopies.filter((_, idx) => idx !== i) })}
+            />
+            <Uploader
+              title="CIPC COR14.3"
+              helper="Your company's CIPC COR14.3 registration certificate."
+              files={proofOfAddress}
+              onAdd={(fl) => handleFiles(fl, "proofOfAddress", proofOfAddress)}
+              onRemove={(i) => onChange({ proofOfAddress: proofOfAddress.filter((_, idx) => idx !== i) })}
+            />
+          </>
         )}
-
-        {/* All services: ID Copy */}
-        <Uploader
-          title="ID Copy"
-          helper="Your valid South African ID or passport copy."
-          files={idCopies}
-          onAdd={(fl) => handleFiles(fl, "idCopies", idCopies)}
-          onRemove={(i) => onChange({ idCopies: idCopies.filter((_, idx) => idx !== i) })}
-        />
-
-        {/* All services: COR14.3 or Proof of Address */}
-        <Uploader
-          title="COR14.3 (or Proof of Address)"
-          helper="COR14.3 certificate or utility bill/bank statement not older than 3 months."
-          files={proofOfAddress}
-          onAdd={(fl) => handleFiles(fl, "proofOfAddress", proofOfAddress)}
-          onRemove={(i) => onChange({ proofOfAddress: proofOfAddress.filter((_, idx) => idx !== i) })}
-        />
       </div>
     </div>
   );

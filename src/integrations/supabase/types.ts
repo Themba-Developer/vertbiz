@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      application_deliveries: {
+        Row: {
+          application_id: string
+          delivered_at: string
+          delivered_by: string
+          file_name: string
+          file_path: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+        }
+        Insert: {
+          application_id: string
+          delivered_at?: string
+          delivered_by: string
+          file_name: string
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+        }
+        Update: {
+          application_id?: string
+          delivered_at?: string
+          delivered_by?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_deliveries_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_documents: {
         Row: {
           application_id: string
@@ -60,15 +101,18 @@ export type Database = {
       }
       applications: {
         Row: {
+          admin_delivered: boolean
           admin_notes: string | null
           certificate_path: string | null
           created_at: string
+          delivered_at: string | null
           directors: Json
           id: string
           payment_ref: string | null
           primary_director_email: string
           primary_director_name: string
           proposed_names: string[]
+          service_id: string
           status: Database["public"]["Enums"]["application_status"]
           submitted_at: string | null
           terms_accepted: boolean
@@ -76,15 +120,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_delivered?: boolean
           admin_notes?: string | null
           certificate_path?: string | null
           created_at?: string
+          delivered_at?: string | null
           directors?: Json
           id?: string
           payment_ref?: string | null
           primary_director_email: string
           primary_director_name: string
           proposed_names?: string[]
+          service_id?: string
           status?: Database["public"]["Enums"]["application_status"]
           submitted_at?: string | null
           terms_accepted?: boolean
@@ -92,15 +139,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_delivered?: boolean
           admin_notes?: string | null
           certificate_path?: string | null
           created_at?: string
+          delivered_at?: string | null
           directors?: Json
           id?: string
           payment_ref?: string | null
           primary_director_email?: string
           primary_director_name?: string
           proposed_names?: string[]
+          service_id?: string
           status?: Database["public"]["Enums"]["application_status"]
           submitted_at?: string | null
           terms_accepted?: boolean

@@ -34,8 +34,12 @@ function CheckoutPage() {
 
   const handlePay = async () => {
     if (!user) return;
-    
-    if (data.idCopies.length === 0 || data.proofOfAddress.length === 0 || data.directorIdFiles.length === 0) {
+
+    const isCipc = (data.serviceId || "cipc") === "cipc";
+    const filesOk = isCipc
+      ? data.directorIdFiles.length > 0
+      : data.idCopies.length > 0 && data.proofOfAddress.length > 0;
+    if (!filesOk) {
       toast.error("All required documents must be uploaded.");
       navigate({ to: "/register" });
       return;
@@ -53,7 +57,7 @@ function CheckoutPage() {
           primary_director_name: `${primary.fullNames} ${primary.surname}`.trim(),
           primary_director_email: primary.email,
           directors: data.directors as any,
-          proposed_names: data.proposedNames.filter((n) => n.trim()),
+          proposed_names: isCipc ? data.proposedNames.filter((n) => n.trim()) : [],
           terms_accepted: true,
           payment_ref: paymentRef,
           submitted_at: new Date().toISOString(),
@@ -63,11 +67,12 @@ function CheckoutPage() {
         .single();
       if (appErr) throw appErr;
 
-      const uploads: { file: File; kind: "id_copy" | "proof_of_address" | "director_id" }[] = [
-        ...data.idCopies.map((f) => ({ file: f, kind: "id_copy" as const })),
-        ...data.proofOfAddress.map((f) => ({ file: f, kind: "proof_of_address" as const })),
-        ...data.directorIdFiles.map((f) => ({ file: f, kind: "director_id" as const })),
-      ];
+      const uploads: { file: File; kind: "id_copy" | "proof_of_address" | "director_id" }[] = isCipc
+        ? data.directorIdFiles.map((f) => ({ file: f, kind: "director_id" as const }))
+        : [
+            ...data.idCopies.map((f) => ({ file: f, kind: "id_copy" as const })),
+            ...data.proofOfAddress.map((f) => ({ file: f, kind: "proof_of_address" as const })),
+          ];
 
       for (const u of uploads) {
         const safeName = u.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
