@@ -23,7 +23,7 @@ export const SERVICES: Service[] = [
     hasIntakeForm: true,
     primary: true,
     requiresProposedNames: true,
-    requiredDocuments: ["director_id_copies", "cor14_3"],
+    requiredDocuments: ["director_id_copies"],
     features: [
       "CIPC name reservation",
       "Registration certificate (COR14.3)",

@@ -18,18 +18,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
+    const syncSession = async (s: Session | null) => {
+      setLoading(true);
       setSession(s);
       if (s?.user) {
-        setTimeout(() => fetchRole(s.user.id), 0);
+        await fetchRole(s.user.id);
       } else {
         setIsAdmin(false);
       }
+      setLoading(false);
+    };
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
+      void syncSession(s);
     });
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session?.user) fetchRole(data.session.user.id);
-      setLoading(false);
+      void syncSession(data.session);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
