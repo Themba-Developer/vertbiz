@@ -122,7 +122,7 @@ function Landing() {
                       search={{ serviceId: s.id }}
                       className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition"
                     >
-                      Start Registration <ArrowRight className="h-4 w-4" />
+                      Start {s.name} <ArrowRight className="h-4 w-4" />
                     </Link>
                   ) : (
                     <a
