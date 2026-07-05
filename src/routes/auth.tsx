@@ -34,7 +34,12 @@ function AuthPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate({ to: search.redirect ?? "/dashboard" });
+      const redirect = search.redirect?.startsWith("/") ? search.redirect : "/dashboard";
+      if (redirect.includes("?") || redirect.includes("#")) {
+        window.location.assign(redirect);
+      } else {
+        navigate({ to: redirect });
+      }
     }
   }, [user, loading, navigate, search.redirect]);
 
