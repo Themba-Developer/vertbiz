@@ -33,6 +33,7 @@ function AuthPage() {
   const [otp, setOtp] = useState("");
 
   useEffect(() => {
+    if (otpSent) return;
     if (!loading && user) {
       const redirect = search.redirect?.startsWith("/") ? search.redirect : "/dashboard";
       if (redirect.includes("?") || redirect.includes("#")) {
@@ -41,7 +42,7 @@ function AuthPage() {
         navigate({ to: redirect });
       }
     }
-  }, [user, loading, navigate, search.redirect]);
+  }, [user, loading, navigate, search.redirect, otpSent]);
 
   const validate = () => {
     const schema = z.object({
@@ -62,26 +63,16 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        // Sign up and send OTP for email verification
-        const { error: signupError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin + "/auth",
-          },
-        });
-        if (signupError) throw signupError;
-
-        // Send OTP after successful signup
         const { error: otpError } = await supabase.auth.signInWithOtp({
           email,
           options: {
+            shouldCreateUser: true,
             emailRedirectTo: window.location.origin + "/auth",
           },
         });
         if (otpError) throw otpError;
 
-        toast.success("Account created! Check your email for a verification code.");
+        toast.success("Verification code sent to your email.");
         setOtpSent(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -109,8 +100,11 @@ function AuthPage() {
         type: "email",
       });
       if (error) throw error;
-      toast.success("Email verified! You can now sign in.");
-      setMode("signin");
+
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
+
+      toast.success("Email verified. Your account is ready.");
       setOtp("");
       setOtpSent(false);
     } catch (err) {

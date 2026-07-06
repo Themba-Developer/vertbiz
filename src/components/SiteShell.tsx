@@ -23,6 +23,11 @@ export function SiteShell({ children }: { children: ReactNode }) {
               <div className="text-[11px] text-muted-foreground -mt-0.5">CIPC Registration Services</div>
             </div>
           </Link>
+          {isAdmin && (
+            <Link to="/admin" className="sm:hidden inline-flex items-center gap-1 rounded-md border border-primary/30 px-3 py-1.5 text-xs text-primary font-medium">
+              <Shield className="h-3.5 w-3.5" /> Admin
+            </Link>
+          )}
           <nav className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <a href="/#pricing" className="hover:text-foreground transition-colors">Pricing</a>
