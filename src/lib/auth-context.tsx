@@ -2,8 +2,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-const ADMIN_EMAIL = "support@vertcorp.org";
-
 type AuthState = {
   session: Session | null;
   user: User | null;
@@ -48,9 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const emailIsAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
     setRoleLoading(true);
-    setIsAdmin(emailIsAdmin);
+    setIsAdmin(false);
 
     const loadRole = async () => {
       try {
@@ -61,9 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq("role", "admin")
           .maybeSingle();
         if (!active) return;
-        setIsAdmin(emailIsAdmin || (!error && !!data));
+        setIsAdmin(!error && !!data);
       } catch {
-        if (active) setIsAdmin(emailIsAdmin);
+        if (active) setIsAdmin(false);
       } finally {
         if (active) setRoleLoading(false);
       }
