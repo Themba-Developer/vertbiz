@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+const ADMIN_EMAIL = "support@vertcorp.org";
+
 type AuthState = {
   session: Session | null;
   user: User | null;
@@ -15,38 +17,66 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
 
   useEffect(() => {
-    const syncSession = async (s: Session | null) => {
-      setLoading(true);
+    const syncSession = (s: Session | null) => {
       setSession(s);
-      if (s?.user) {
-        await fetchRole(s.user.id);
-      } else {
-        setIsAdmin(false);
-      }
-      setLoading(false);
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
-      void syncSession(s);
+      syncSession(s);
     });
     supabase.auth.getSession().then(({ data }) => {
-      void syncSession(data.session);
+      syncSession(data.session);
+      setSessionLoading(false);
+    }).catch(() => {
+      setSession(null);
+      setSessionLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const fetchRole = async (uid: string) => {
-    const { data } = await supabase
+  useEffect(() => {
+    let active = true;
+    const user = session?.user;
+
+    if (!user) {
+      setIsAdmin(false);
+      setRoleLoading(false);
+      return;
+    }
+
+    const emailIsAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+    setRoleLoading(true);
+    setIsAdmin(emailIsAdmin);
+
+    supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", uid)
+      .eq("user_id", user.id)
       .eq("role", "admin")
-      .maybeSingle();
-    setIsAdmin(!!data);
-  };
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          setIsAdmin(emailIsAdmin);
+          return;
+        }
+        setIsAdmin(emailIsAdmin || !!data);
+      })
+      .catch(() => {
+        if (active) setIsAdmin(emailIsAdmin);
+      })
+      .finally(() => {
+        if (active) setRoleLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id, session?.user?.email]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -54,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, isAdmin, loading, signOut }}
+      value={{ session, user: session?.user ?? null, isAdmin, loading: sessionLoading || roleLoading, signOut }}
     >
       {children}
     </AuthContext.Provider>

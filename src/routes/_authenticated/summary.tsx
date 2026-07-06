@@ -51,7 +51,7 @@ function SummaryPage() {
       toast.error("All required documents must be uploaded");
       return;
     }
-    navigate({ to: "/checkout" });
+    navigate({ to: "/checkout", search: { serviceId: service?.id || "cipc" } });
   };
 
   return (

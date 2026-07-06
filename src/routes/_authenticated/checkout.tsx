@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Lock, ShieldCheck, ArrowLeft } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
@@ -9,6 +9,9 @@ import { getService } from "@/lib/services";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    serviceId: typeof s.serviceId === "string" ? s.serviceId : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Checkout — Vert Corp Group" },
@@ -20,22 +23,27 @@ export const Route = createFileRoute("/_authenticated/checkout")({
 
 function CheckoutPage() {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/_authenticated/checkout" });
   const { user } = useAuth();
   const [data, setData] = useState<RegistrationDraft>(emptyRegistration());
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { setData(loadRegistration()); }, []);
+  useEffect(() => {
+    const loaded = loadRegistration();
+    setData({ ...loaded, serviceId: search.serviceId || loaded.serviceId || "cipc" });
+  }, [search.serviceId]);
 
   const primary = data.directors[0];
   const primaryName = data.proposedNames[0] || "Your company";
-  const service = data.serviceId ? getService(data.serviceId) : null;
+  const service = getService(data.serviceId || search.serviceId || "cipc") || getService("cipc");
   const paymentUrl = service?.payfastUrl || CIPC_PAYFAST_URL;
   const amount = service?.price || REGISTRATION_FEE;
 
   const handlePay = async () => {
     if (!user) return;
 
-    const isCipc = (data.serviceId || "cipc") === "cipc";
+    const serviceId = service?.id || data.serviceId || search.serviceId || "cipc";
+    const isCipc = serviceId === "cipc";
     const filesOk = isCipc
       ? data.directorIdFiles.length > 0
       : data.idCopies.length > 0 && data.proofOfAddress.length > 0;
@@ -53,7 +61,7 @@ function CheckoutPage() {
         .from("applications")
         .insert({
           user_id: user.id,
-          service_id: data.serviceId || "cipc",
+          service_id: serviceId,
           primary_director_name: `${primary.fullNames} ${primary.surname}`.trim(),
           primary_director_email: primary.email,
           directors: data.directors as any,
@@ -137,7 +145,7 @@ function CheckoutPage() {
           <div className="px-6 pb-6">
             <button type="button" onClick={handlePay} disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground px-6 py-3.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-60">
               <Lock className="h-4 w-4" />
-              {submitting ? "Processing..." : "Proceed to Secure Payment"}
+              {submitting ? "Processing..." : `Pay ${service?.priceLabel || `R${amount.toFixed(2)}`} with PayFast`}
             </button>
             <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 text-success" />
