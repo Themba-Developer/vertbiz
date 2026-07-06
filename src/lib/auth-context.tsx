@@ -52,26 +52,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRoleLoading(true);
     setIsAdmin(emailIsAdmin);
 
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle()
-      .then(({ data, error }) => {
+    const loadRole = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
         if (!active) return;
-        if (error) {
-          setIsAdmin(emailIsAdmin);
-          return;
-        }
-        setIsAdmin(emailIsAdmin || !!data);
-      })
-      .catch(() => {
+        setIsAdmin(emailIsAdmin || (!error && !!data));
+      } catch {
         if (active) setIsAdmin(emailIsAdmin);
-      })
-      .finally(() => {
+      } finally {
         if (active) setRoleLoading(false);
-      });
+      }
+    };
+
+    void loadRole();
 
     return () => {
       active = false;
