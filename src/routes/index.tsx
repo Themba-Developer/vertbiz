@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2, Check, Clock, FileCheck, ShieldCheck, ArrowRight, Handshake, MessageCircle } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
 import { SERVICES } from "@/lib/services";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,10 +17,12 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const { user } = useAuth();
+
   return (
     <SiteShell>
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      {!user && <section className="relative overflow-hidden">
         <div
           className="absolute inset-0 -z-10 opacity-70"
           style={{
@@ -79,7 +82,7 @@ function Landing() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* Services */}
       <section id="services" className="py-20 bg-surface border-y border-border">

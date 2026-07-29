@@ -84,7 +84,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
-                    <a href="/#pricing" className="cursor-pointer">
+                    <a href="/#services" className="cursor-pointer">
                       <PlusCircle className="h-4 w-4" />
                       Choose a Service
                     </a>
@@ -113,7 +113,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <a href="/#pricing" className="cursor-pointer">
+                    <a href="/#services" className="cursor-pointer">
                       <PlusCircle className="h-4 w-4" />
                       Choose a Service
                     </a>
@@ -124,7 +124,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </DropdownMenu>
           <nav className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-            <a href="/#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+            <a href="/#services" className="hover:text-foreground transition-colors">Services</a>
             {user && (
               <>
                 <Link to="/dashboard" className="hover:text-foreground transition-colors">
@@ -157,7 +157,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   <LogOut className="h-3.5 w-3.5" /> Sign out
                 </button>
                 <a
-                  href="/#pricing"
+                  href="/#services"
                   className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition"
                 >
                   Start Registration
@@ -169,7 +169,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   Sign in
                 </Link>
                 <a
-                  href="/#pricing"
+                  href="/#services"
                   className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition"
                 >
                   Start Registration

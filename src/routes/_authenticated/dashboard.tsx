@@ -50,7 +50,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [deliveries, setDeliveries] = useState<Record<string, Delivery[]>>({});
   const [loading, setLoading] = useState(true);
@@ -192,7 +192,7 @@ function Dashboard() {
             <p className="text-muted-foreground text-sm mt-1">Track and download your completed services.</p>
           </div>
           <a
-            href="/#pricing"
+            href="/#services"
             className="inline-flex items-center gap-2 rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
           >
             <PlusCircle className="h-4 w-4" /> New Application
@@ -237,6 +237,28 @@ function Dashboard() {
           </section>
         )}
 
+        {!affiliate && !isAdmin && (
+          <section className="mb-6 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <Handshake className="h-5 w-5 shrink-0 text-primary mt-0.5" />
+                <div>
+                  <div className="text-sm font-semibold text-foreground">Make extra cash with Vert Corp Group</div>
+                  <p className="text-xs text-muted-foreground">
+                    Upgrade to an affiliate business account and earn 25% on successfully paid services.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/affiliate"
+                className="shrink-0 rounded-md border border-primary px-3 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                Register as an Affiliate
+              </Link>
+            </div>
+          </section>
+        )}
+
         {anyCompleted && (
           <div className="mb-6 rounded-xl border border-green-300 bg-green-50 text-green-900 p-5 flex items-start gap-3">
             <PartyPopper className="h-6 w-6 shrink-0 text-green-700" />
@@ -255,7 +277,7 @@ function Dashboard() {
             <h2 className="mt-4 font-semibold text-foreground">No applications yet</h2>
             <p className="text-sm text-muted-foreground mt-1">Start your first application in just a few minutes.</p>
             <a
-              href="/#pricing"
+              href="/#services"
               className="mt-4 inline-flex items-center gap-2 rounded-md bg-accent text-accent-foreground px-5 py-2.5 text-sm font-semibold hover:opacity-90 transition"
             >
               Choose a Service
