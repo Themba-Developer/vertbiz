@@ -142,7 +142,7 @@ function Landing() {
             {[
               { n: 1, t: "Pick a service", d: "Choose the compliance product you need." },
               { n: 2, t: "Submit your details", d: "Complete the short online intake." },
-              { n: 3, t: "Pay securely", d: "Instant PayFast checkout in ZAR." },
+              { n: 3, t: "Pay securely", d: "Instant PayFast checkout." },
               { n: 4, t: "We handle the rest", d: "Documents delivered digitally to you." },
             ].map((s) => (
               <div key={s.n} className="rounded-xl border border-border bg-card p-5">

@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { SiteShell } from "@/components/SiteShell";
 import { z } from "zod";
+import { Capacitor } from "@capacitor/core";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+  const authRedirect = Capacitor.isNativePlatform() ? "vertbiz://auth" : `${siteUrl}/auth`;
   const navigate = useNavigate();
   const search = useSearch({ from: "/auth" });
   const { user, loading } = useAuth();
@@ -67,7 +69,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${siteUrl}/auth`,
+            emailRedirectTo: authRedirect,
           },
         });
         if (signupError) throw signupError;
@@ -91,7 +93,7 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${siteUrl}/auth`,
+        redirectTo: authRedirect,
       },
     });
     if (error) {
@@ -110,7 +112,7 @@ function AuthPage() {
     setBusy(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
-        redirectTo: `${siteUrl}/auth?mode=reset`,
+        redirectTo: `${authRedirect}?mode=reset`,
       });
       if (error) throw error;
       toast.success("If an account exists, a password reset email has been sent.");

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VertBiz</string>
+    <string name="title_activity_main">VertBiz</string>
+    <string name="package_name">com.vertbiz.app</string>
+    <string name="custom_url_scheme">com.vertbiz.app</string>
+</resources>

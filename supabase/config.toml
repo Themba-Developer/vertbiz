@@ -5,6 +5,8 @@ site_url = "https://vertbiz.online"
 additional_redirect_urls = [
   "https://vertbiz.online/auth",
   "https://vertbiz.online/auth?mode=reset",
+  "vertbiz://auth",
+  "vertbiz://auth?mode=reset",
 ]
 
 [auth.email]

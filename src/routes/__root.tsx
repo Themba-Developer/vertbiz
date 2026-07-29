@@ -9,6 +9,8 @@ import { useEffect } from "react";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/lib/auth-context";
+import { NativeRuntime } from "@/components/NativeRuntime";
+import { Capacitor } from "@capacitor/core";
 
 function NotFoundComponent() {
   return (
@@ -76,6 +78,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
     let cancelled = false;
     import("../lib/sw-register").then((m) => {
       if (!cancelled) m.registerServiceWorker();
@@ -88,6 +91,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <NativeRuntime />
         <Toaster richColors position="top-right" />
         <Outlet />
       </AuthProvider>
