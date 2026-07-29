@@ -39,7 +39,7 @@ const companyBasics: IntakeField[] = [
   { id: "business_address", label: "Physical business address", type: "textarea", required: true },
 ];
 
-export const SERVICES: Service[] = [
+const SERVICE_TEMPLATES: Service[] = [
   {
     id: "cipc",
     name: "Company Registration (CIPC)",
@@ -316,4 +316,42 @@ export const SERVICES: Service[] = [
   },
 ];
 
-export const getService = (id: string) => SERVICES.find((s) => s.id === id);
+const tieredService = (
+  service: Service,
+  tier: "Basic" | "Standard" | "Premium",
+  price: number,
+): Service => ({
+  ...service,
+  id: `${service.id}-${tier.toLowerCase()}`,
+  name: `${service.name} — ${tier}`,
+  price,
+  priceLabel: `R${price.toLocaleString("en-US")}`,
+});
+
+export const SERVICES: Service[] = SERVICE_TEMPLATES.flatMap((service) => {
+  if (service.id === "business-plan") {
+    return [
+      tieredService(service, "Basic", 2499),
+      tieredService(service, "Standard", 6299),
+      tieredService(service, "Premium", 16399),
+    ];
+  }
+  if (service.id === "feasibility") {
+    return [
+      tieredService(service, "Basic", 2999),
+      tieredService(service, "Standard", 7999),
+      tieredService(service, "Premium", 16299),
+    ];
+  }
+  return [service];
+});
+
+export const getService = (id: string) => {
+  const compatibleId =
+    id === "business-plan"
+      ? "business-plan-basic"
+      : id === "feasibility"
+        ? "feasibility-premium"
+        : id;
+  return SERVICES.find((service) => service.id === compatibleId);
+};

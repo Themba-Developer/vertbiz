@@ -5,6 +5,13 @@ export const SERVICE_PRICES: Record<string, { name: string; amount: string }> = 
   bbbee: { name: "B-BBEE Affidavit", amount: "249.99" },
   "sars-pbo": { name: "SARS PBO Registration", amount: "2999.00" },
   "company-profile": { name: "Company Profile", amount: "249.00" },
+  "business-plan-basic": { name: "Business Plan — Basic", amount: "2499.00" },
+  "business-plan-standard": { name: "Business Plan — Standard", amount: "6299.00" },
+  "business-plan-premium": { name: "Business Plan — Premium", amount: "16399.00" },
+  "feasibility-basic": { name: "Feasibility Study — Basic", amount: "2999.00" },
+  "feasibility-standard": { name: "Feasibility Study — Standard", amount: "7999.00" },
+  "feasibility-premium": { name: "Feasibility Study — Premium", amount: "16299.00" },
+  // Legacy application IDs remain payable at the price displayed when they were created.
   "business-plan": { name: "Business Plan", amount: "2499.00" },
   feasibility: { name: "Feasibility Study", amount: "16299.00" },
 };
