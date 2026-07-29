@@ -4,8 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { SiteShell } from "@/components/SiteShell";
+import { PasswordField } from "@/components/PasswordField";
 import { z } from "zod";
 import { Capacitor } from "@capacitor/core";
+import { NativeBiometric } from "@capgo/capacitor-native-biometric";
+import { Fingerprint } from "lucide-react";
+
+const BIOMETRIC_SERVER = "vertbiz.online";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -33,6 +38,23 @@ function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmationSent, setConfirmationSent] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricSaved, setBiometricSaved] = useState(false);
+  const [enableBiometric, setEnableBiometric] = useState(true);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    Promise.all([
+      NativeBiometric.isAvailable({ useFallback: true }),
+      NativeBiometric.isCredentialsSaved({ server: BIOMETRIC_SERVER }),
+    ]).then(([available, saved]) => {
+      setBiometricAvailable(available.isAvailable);
+      setBiometricSaved(saved.isSaved);
+    }).catch(() => {
+      setBiometricAvailable(false);
+      setBiometricSaved(false);
+    });
+  }, []);
 
   useEffect(() => {
     if (confirmationSent || mode === "reset") return;
@@ -65,11 +87,14 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        const confirmationRedirect = search.redirect?.startsWith("/")
+          ? `${authRedirect}?redirect=${encodeURIComponent(search.redirect)}`
+          : authRedirect;
         const { error: signupError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: authRedirect,
+            emailRedirectTo: confirmationRedirect,
           },
         });
         if (signupError) throw signupError;
@@ -79,6 +104,18 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (biometricAvailable && enableBiometric) {
+          try {
+            await NativeBiometric.setCredentials({
+              username: email.trim(),
+              password,
+              server: BIOMETRIC_SERVER,
+            });
+            setBiometricSaved(true);
+          } catch {
+            toast.error("You are signed in, but biometrics could not be enabled on this device.");
+          }
+        }
         toast.success("Welcome back");
       }
     } catch (err) {
@@ -98,6 +135,31 @@ function AuthPage() {
     });
     if (error) {
       toast.error(error.message || "Google sign-in failed");
+      setBusy(false);
+    }
+  };
+
+  const handleBiometricSignIn = async () => {
+    setBusy(true);
+    try {
+      await NativeBiometric.verifyIdentity({
+        reason: "Sign in securely to VertBiz",
+        title: "VertBiz sign in",
+        subtitle: "Confirm your identity",
+        description: "Use your fingerprint, face, or device authentication.",
+        useFallback: true,
+        maxAttempts: 3,
+      });
+      const credentials = await NativeBiometric.getCredentials({ server: BIOMETRIC_SERVER });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: credentials.username,
+        password: credentials.password,
+      });
+      if (error) throw error;
+      toast.success("Welcome back");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Biometric sign-in was not completed.");
+    } finally {
       setBusy(false);
     }
   };
@@ -220,25 +282,21 @@ function AuthPage() {
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-foreground">New password</label>
-                  <input
-                    type="password"
+                  <PasswordField
                     required
                     minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="At least 8 characters"
                   />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground">Confirm new password</label>
-                  <input
-                    type="password"
+                  <PasswordField
                     required
                     minLength={8}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="Repeat your new password"
                   />
                 </div>
@@ -278,15 +336,24 @@ function AuthPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-foreground">Password</label>
-                    <input
-                      type="password"
+                    <PasswordField
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="At least 8 characters"
                     />
                   </div>
+                  {mode === "signin" && biometricAvailable && (
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={enableBiometric}
+                        onChange={(event) => setEnableBiometric(event.target.checked)}
+                        className="h-4 w-4 rounded border-input"
+                      />
+                      Enable biometric sign-in on this device
+                    </label>
+                  )}
                   <button
                     type="submit"
                     disabled={busy}
@@ -295,13 +362,26 @@ function AuthPage() {
                     {busy ? "Please wait..." : mode === "signup" ? "Create account" : "Sign in"}
                   </button>
                   {mode === "signin" && (
-                    <button
-                      type="button"
-                      onClick={() => setMode("forgot")}
-                      className="w-full text-sm text-primary hover:underline"
-                    >
-                      Forgot your password?
-                    </button>
+                    <>
+                      {biometricAvailable && biometricSaved && (
+                        <button
+                          type="button"
+                          onClick={handleBiometricSignIn}
+                          disabled={busy}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-primary/30 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5 disabled:opacity-60"
+                        >
+                          <Fingerprint className="h-5 w-5" />
+                          Sign in with biometrics
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setMode("forgot")}
+                        className="w-full text-sm text-primary hover:underline"
+                      >
+                        Forgot your password?
+                      </button>
+                    </>
                   )}
                 </form>
 

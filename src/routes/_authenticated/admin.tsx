@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, Shield, Search, Loader2, AlertCircle, Upload, CheckCircle2, Eye } from "lucide-react";
+import { Download, Shield, Search, Loader2, AlertCircle, Upload, CheckCircle2, Eye, Users, Wallet, XCircle } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -60,6 +60,8 @@ function AdminPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationWithDocs | null>(null);
+  const [affiliates, setAffiliates] = useState<any[]>([]);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -97,12 +99,67 @@ function AdminPage() {
         })
       );
       setApplications(enriched as ApplicationWithDocs[]);
+      const [{ data: affiliateData }, { data: withdrawalData }] = await Promise.all([
+        (supabase as any).from("affiliate_profiles").select("*").order("created_at", { ascending: false }),
+        (supabase as any).from("withdrawal_requests").select("*").order("requested_at", { ascending: false }),
+      ]);
+      setAffiliates(affiliateData || []);
+      setWithdrawals(withdrawalData || []);
     } catch (err) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : "Failed to load applications");
     } finally {
       setLoading(false);
     }
+  };
+
+  const setAffiliateStatus = async (userId: string, status: "approved" | "rejected") => {
+    const rejectionReason = status === "rejected"
+      ? window.prompt("Reason for rejection or changes required:")?.trim()
+      : null;
+    if (status === "rejected" && !rejectionReason) return;
+    const { error } = await (supabase as any).from("affiliate_profiles").update({
+      status,
+      rejection_reason: rejectionReason,
+      approved_at: status === "approved" ? new Date().toISOString() : null,
+      approved_by: status === "approved" ? (await supabase.auth.getUser()).data.user?.id : null,
+      updated_at: new Date().toISOString(),
+    }).eq("user_id", userId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(status === "approved" ? "Affiliate approved." : "Affiliate returned for changes.");
+    await loadApplications();
+  };
+
+  const setWithdrawalStatus = async (id: string, status: "processing" | "paid" | "rejected") => {
+    const currentUser = (await supabase.auth.getUser()).data.user;
+    const { error } = await (supabase as any).from("withdrawal_requests").update({
+      status,
+      processed_at: new Date().toISOString(),
+      processed_by: currentUser?.id,
+    }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Withdrawal marked ${status}.`);
+    await loadApplications();
+  };
+
+  const downloadAffiliateDocument = async (path: string) => {
+    const { data, error } = await supabase.storage.from("documents").download(path);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const url = URL.createObjectURL(data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = path.split("/").pop() || "affiliate-document";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const downloadAllDocuments = async (app: ApplicationWithDocs) => {
@@ -221,6 +278,86 @@ function AdminPage() {
           <Shield className="h-6 w-6 text-accent" />
           <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
         </div>
+
+        <section className="mb-8 rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-5 w-5 text-accent" />
+            <h2 className="text-xl font-semibold">Affiliate applications</h2>
+          </div>
+          {affiliates.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No affiliate applications.</p>
+          ) : (
+            <div className="space-y-4">
+              {affiliates.map((affiliate) => (
+                <div key={affiliate.user_id} className="rounded-xl border border-border p-4">
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    <div>
+                      <div className="font-semibold">{affiliate.company_name}</div>
+                      <div className="text-sm text-muted-foreground">Reg: {affiliate.company_registration_number}</div>
+                      <div className="mt-2 text-sm">
+                        {affiliate.bank_name} · {affiliate.account_type}<br />
+                        {affiliate.account_holder} · {affiliate.account_number} · Branch {affiliate.branch_code}
+                      </div>
+                      <span className="mt-2 inline-block rounded-full border px-2 py-1 text-xs font-semibold capitalize">{affiliate.status}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        ["CIPC COR14.3", affiliate.cipc_document_path],
+                        ["Proof of banking", affiliate.bank_proof_path],
+                        ["ID copy", affiliate.id_document_path],
+                      ].map(([label, path]) => (
+                        <button key={label} onClick={() => downloadAffiliateDocument(path)}
+                          className="rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-secondary">
+                          <Download className="inline h-3.5 w-3.5 mr-1" />{label}
+                        </button>
+                      ))}
+                      {affiliate.status !== "approved" && (
+                        <button onClick={() => setAffiliateStatus(affiliate.user_id, "approved")}
+                          className="rounded-md bg-green-600 px-3 py-2 text-xs font-semibold text-white">
+                          <CheckCircle2 className="inline h-3.5 w-3.5 mr-1" />Approve
+                        </button>
+                      )}
+                      {affiliate.status !== "rejected" && (
+                        <button onClick={() => setAffiliateStatus(affiliate.user_id, "rejected")}
+                          className="rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-white">
+                          <XCircle className="inline h-3.5 w-3.5 mr-1" />Reject
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mb-8 rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Wallet className="h-5 w-5 text-accent" />
+            <h2 className="text-xl font-semibold">Affiliate withdrawal notifications</h2>
+          </div>
+          {withdrawals.length === 0 ? <p className="text-sm text-muted-foreground">No withdrawal requests.</p> : (
+            <div className="space-y-3">
+              {withdrawals.map((withdrawal) => (
+                <div key={withdrawal.id} className="rounded-xl border border-border p-4 flex flex-col lg:flex-row justify-between gap-4">
+                  <div className="text-sm">
+                    <div className="font-semibold">{withdrawal.company_name} · R{Number(withdrawal.amount).toFixed(2)}</div>
+                    <div className="text-muted-foreground">Reg: {withdrawal.company_registration_number}</div>
+                    <div>{withdrawal.bank_name} · {withdrawal.account_holder} · {withdrawal.account_number} · Branch {withdrawal.branch_code} · {withdrawal.account_type}</div>
+                    <div className="mt-1 capitalize font-medium">Status: {withdrawal.status}</div>
+                  </div>
+                  {withdrawal.status === "requested" && (
+                    <div className="flex gap-2">
+                      <button onClick={() => setWithdrawalStatus(withdrawal.id, "processing")} className="rounded-md border px-3 py-2 text-xs font-medium">Processing</button>
+                      <button onClick={() => setWithdrawalStatus(withdrawal.id, "paid")} className="rounded-md bg-green-600 px-3 py-2 text-xs font-semibold text-white">Mark paid</button>
+                      <button onClick={() => setWithdrawalStatus(withdrawal.id, "rejected")} className="rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-white">Reject</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         <div className="mb-6 flex gap-3">
           <div className="relative flex-1">

@@ -9,68 +9,82 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedSummaryRouteImport } from './routes/_authenticated/summary'
-import { Route as AuthenticatedSuccessRouteImport } from './routes/_authenticated/success'
-import { Route as AuthenticatedRegisterRouteImport } from './routes/_authenticated/register'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAffiliateRouteImport } from './routes/_authenticated/affiliate'
+import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedRegisterRouteImport } from './routes/_authenticated/register'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSuccessRouteImport } from './routes/_authenticated/success'
+import { Route as AuthenticatedSummaryRouteImport } from './routes/_authenticated/summary'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSummaryRoute = AuthenticatedSummaryRouteImport.update({
-  id: '/summary',
-  path: '/summary',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSuccessRoute = AuthenticatedSuccessRouteImport.update({
-  id: '/success',
-  path: '/success',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRegisterRoute = AuthenticatedRegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAffiliateRoute = AuthenticatedAffiliateRouteImport.update({
+  id: '/affiliate',
+  path: '/affiliate',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedRegisterRoute = AuthenticatedRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSuccessRoute = AuthenticatedSuccessRouteImport.update({
+  id: '/success',
+  path: '/success',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSummaryRoute = AuthenticatedSummaryRouteImport.update({
+  id: '/summary',
+  path: '/summary',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/affiliate': typeof AuthenticatedAffiliateRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/register': typeof AuthenticatedRegisterRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/success': typeof AuthenticatedSuccessRoute
   '/summary': typeof AuthenticatedSummaryRoute
 }
@@ -78,21 +92,25 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/affiliate': typeof AuthenticatedAffiliateRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/register': typeof AuthenticatedRegisterRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/success': typeof AuthenticatedSuccessRoute
   '/summary': typeof AuthenticatedSummaryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/affiliate': typeof AuthenticatedAffiliateRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/register': typeof AuthenticatedRegisterRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/success': typeof AuthenticatedSuccessRoute
   '/_authenticated/summary': typeof AuthenticatedSummaryRoute
 }
@@ -102,9 +120,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/affiliate'
     | '/checkout'
     | '/dashboard'
     | '/register'
+    | '/settings'
     | '/success'
     | '/summary'
   fileRoutesByTo: FileRoutesByTo
@@ -112,9 +132,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/affiliate'
     | '/checkout'
     | '/dashboard'
     | '/register'
+    | '/settings'
     | '/success'
     | '/summary'
   id:
@@ -123,35 +145,23 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/affiliate'
     | '/_authenticated/checkout'
     | '/_authenticated/dashboard'
     | '/_authenticated/register'
+    | '/_authenticated/settings'
     | '/_authenticated/success'
     | '/_authenticated/summary'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -159,75 +169,108 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/summary': {
-      id: '/_authenticated/summary'
-      path: '/summary'
-      fullPath: '/summary'
-      preLoaderRoute: typeof AuthenticatedSummaryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/success': {
-      id: '/_authenticated/success'
-      path: '/success'
-      fullPath: '/success'
-      preLoaderRoute: typeof AuthenticatedSuccessRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/register': {
-      id: '/_authenticated/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof AuthenticatedRegisterRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/checkout': {
-      id: '/_authenticated/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/affiliate': {
+      id: '/_authenticated/affiliate'
+      path: '/affiliate'
+      fullPath: '/affiliate'
+      preLoaderRoute: typeof AuthenticatedAffiliateRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/checkout': {
+      id: '/_authenticated/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/register': {
+      id: '/_authenticated/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof AuthenticatedRegisterRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/success': {
+      id: '/_authenticated/success'
+      path: '/success'
+      fullPath: '/success'
+      preLoaderRoute: typeof AuthenticatedSuccessRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/summary': {
+      id: '/_authenticated/summary'
+      path: '/summary'
+      fullPath: '/summary'
+      preLoaderRoute: typeof AuthenticatedSummaryRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
+interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAffiliateRoute: typeof AuthenticatedAffiliateRoute
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedRegisterRoute: typeof AuthenticatedRegisterRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSuccessRoute: typeof AuthenticatedSuccessRoute
   AuthenticatedSummaryRoute: typeof AuthenticatedSummaryRoute
 }
 
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAffiliateRoute: AuthenticatedAffiliateRoute,
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedRegisterRoute: AuthenticatedRegisterRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSuccessRoute: AuthenticatedSuccessRoute,
   AuthenticatedSummaryRoute: AuthenticatedSummaryRoute,
 }
 
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport

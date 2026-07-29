@@ -28,19 +28,22 @@ Deno.serve(async (request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
     const { data: application, error } = await admin.from("applications")
-      .select("id,payment_amount")
+      .select("id,user_id,payment_ref,payment_amount")
       .eq("payment_ref", fields.m_payment_id).single();
     if (error || !application) throw new Error("Unknown payment reference.");
     if (Number(application.payment_amount).toFixed(2) !== Number(fields.amount_gross).toFixed(2)) {
       throw new Error("Payment amount mismatch.");
     }
     if (fields.payment_status === "COMPLETE") {
-      const { error: updateError } = await admin.from("applications").update({
-        status: "under_review",
-        payfast_payment_id: fields.pf_payment_id,
-        paid_at: new Date().toISOString(),
-      }).eq("id", application.id).eq("status", "pending_payment");
-      if (updateError) throw updateError;
+      // The database function changes payment state and credits the approved
+      // affiliate in one transaction. A failed insert rolls back the payment
+      // transition, and repeated PayFast notifications cannot double-credit.
+      const { error: paymentError } = await admin.rpc("confirm_payfast_payment", {
+        application_uuid: application.id,
+        payfast_id: fields.pf_payment_id,
+        gross_amount: Number(fields.amount_gross).toFixed(2),
+      });
+      if (paymentError) throw paymentError;
     }
     return new Response("OK");
   } catch (error) {

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { Home, LayoutDashboard, LogIn, LogOut, Menu, PlusCircle, Shield, User as UserIcon } from "lucide-react";
+import { Handshake, Home, LayoutDashboard, LogIn, LogOut, Menu, PlusCircle, Settings, Shield, User as UserIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function SiteShell({ children }: { children: ReactNode }) {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, affiliateBusinessName, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -45,8 +45,10 @@ export function SiteShell({ children }: { children: ReactNode }) {
               {user ? (
                 <>
                   <DropdownMenuLabel className="font-normal">
-                    <span className="block text-xs text-muted-foreground">Signed in as</span>
-                    <span className="block truncate font-medium">{user.email}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {affiliateBusinessName ? "Business account" : "Signed in as"}
+                    </span>
+                    <span className="block truncate font-medium">{affiliateBusinessName || user.email}</span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
@@ -59,6 +61,18 @@ export function SiteShell({ children }: { children: ReactNode }) {
                     <Link to="/dashboard" className="cursor-pointer">
                       <LayoutDashboard className="h-4 w-4" />
                       Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/affiliate" className="cursor-pointer">
+                      <Handshake className="h-4 w-4" />
+                      Affiliate Account
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="cursor-pointer">
+                      <Settings className="h-4 w-4" />
+                      Settings
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
@@ -112,9 +126,17 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <a href="/#pricing" className="hover:text-foreground transition-colors">Pricing</a>
             {user && (
-              <Link to="/dashboard" className="hover:text-foreground transition-colors">
-                Dashboard
-              </Link>
+              <>
+                <Link to="/dashboard" className="hover:text-foreground transition-colors">
+                  Dashboard
+                </Link>
+                <Link to="/affiliate" className="hover:text-foreground transition-colors">
+                  Affiliate
+                </Link>
+                <Link to="/settings" className="hover:text-foreground transition-colors">
+                  Settings
+                </Link>
+              </>
             )}
             {isAdmin && (
               <Link to="/admin" className="inline-flex items-center gap-1 text-primary hover:text-primary/80 transition-colors font-medium">
@@ -125,7 +147,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
               <div className="flex items-center gap-3 pl-2 border-l border-border">
                 <span className="hidden md:inline text-xs text-muted-foreground max-w-[160px] truncate">
                   <UserIcon className="h-3 w-3 inline mr-1" />
-                  {user.email}
+                  {affiliateBusinessName || user.email}
                 </span>
                 <button
                   onClick={handleSignOut}

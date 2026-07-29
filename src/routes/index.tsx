@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Building2, Check, Clock, FileCheck, ShieldCheck, ArrowRight, MessageCircle } from "lucide-react";
+import { Building2, Check, Clock, FileCheck, ShieldCheck, ArrowRight, Handshake, MessageCircle } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
 import { SERVICES } from "@/lib/services";
 
@@ -53,6 +53,14 @@ function Landing() {
               See all services
             </a>
           </div>
+          <Link
+            to="/auth"
+            search={{ mode: "signup", redirect: "/affiliate" }}
+            className="mt-4 inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline"
+          >
+            <Handshake className="h-4 w-4" />
+            Sign up as an Affiliate
+          </Link>
 
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
             {[
