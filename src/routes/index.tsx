@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Building2, Check, Clock, FileCheck, ShieldCheck, ArrowRight } from "lucide-react";
+import { Building2, Check, Clock, FileCheck, ShieldCheck, ArrowRight, MessageCircle } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
 import { SERVICES } from "@/lib/services";
 
@@ -153,6 +153,41 @@ function Landing() {
                 <div className="text-sm text-muted-foreground mt-1">{s.d}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WhatsApp */}
+      <section className="pb-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="max-w-2xl mx-auto rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-card">
+            <div className="flex items-center gap-2 font-semibold text-foreground">
+              <MessageCircle className="h-5 w-5 text-[#079a63]" />
+              WhatsApp Vert Corp Group
+            </div>
+            <div className="mt-4 rounded-2xl border border-[#a7dfc5] bg-[#e9f8f0] p-5">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#079a63] text-white">
+                  <MessageCircle className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-lg text-[#123d2c]">Hello, how can we help you today?</h2>
+                  <p className="mt-1 text-sm text-[#426c5a]">
+                    Chat with the Vert Corp Group team on WhatsApp.
+                  </p>
+                </div>
+              </div>
+              <a
+                href="https://wa.me/27742311730"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#079a63] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#078456]"
+                aria-label="Start a WhatsApp chat with Vert Corp Group"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Start WhatsApp chat
+              </a>
+            </div>
           </div>
         </div>
       </section>
