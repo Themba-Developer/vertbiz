@@ -45,7 +45,7 @@ function Landing() {
             <Link
               to="/register"
               search={{ serviceId: "cipc" }}
-              className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground px-6 py-3 text-base font-semibold hover:opacity-90 transition shadow-elegant"
+              className="inline-flex w-full items-center justify-center rounded-md bg-accent text-accent-foreground px-6 py-3 text-base font-semibold hover:opacity-90 transition shadow-elegant sm:w-[280px]"
             >
               Register a Company — R749.99
             </Link>
@@ -59,10 +59,10 @@ function Landing() {
           <Link
             to="/auth"
             search={{ mode: "signup", redirect: "/affiliate" }}
-            className="mt-5 inline-flex items-center justify-center gap-2 rounded-md border-2 border-primary bg-primary px-6 py-3 text-base font-bold text-primary-foreground shadow-elegant transition hover:opacity-90"
+            className="mt-5 inline-flex w-full max-w-[280px] items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-elegant transition hover:opacity-90"
           >
             <Handshake className="h-4 w-4" />
-            REGISTER AS AN AFFILIATE
+            Register as an Affiliate
           </Link>
           <p className="mt-2 text-xs font-medium text-muted-foreground">
             Earn 25% commission on successfully paid services.
