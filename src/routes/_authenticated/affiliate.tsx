@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BadgeCheck, Banknote, Building2, Clock3, Loader2, Upload, Wallet } from "lucide-react";
+import { BadgeCheck, Banknote, Building2, CheckCircle2, Clock3, Loader2, Upload, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { SiteShell } from "@/components/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,17 +61,9 @@ function AffiliatePage() {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [nativeDocumentPaths, setNativeDocumentPaths] = useState<Record<string, string>>({});
+  const [uploadingDocument, setUploadingDocument] = useState<string | null>(null);
   const nativePicker = usesNativeDocumentPicker();
-
-  const chooseNativeDocument = async (documentId: string) => {
-    try {
-      const [file] = await pickNativeDocuments(false);
-      if (file) setFiles((current) => ({ ...current, [documentId]: file }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "The selected file could not be read.";
-      if (!/cancel/i.test(message)) toast.error(message);
-    }
-  };
 
   const loadAffiliate = async () => {
     if (!user) return;
@@ -130,10 +122,27 @@ function AffiliatePage() {
     return path;
   };
 
+  const chooseNativeDocument = async (documentId: string) => {
+    setUploadingDocument(documentId);
+    try {
+      const [file] = await pickNativeDocuments(false);
+      if (!file) return;
+      const path = await uploadDocument(documentId, file);
+      setFiles((current) => ({ ...current, [documentId]: file }));
+      setNativeDocumentPaths((current) => ({ ...current, [documentId]: path }));
+      toast.success(`${file.name} attached successfully.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "The selected file could not be attached.";
+      if (!/cancel/i.test(message)) toast.error(message);
+    } finally {
+      setUploadingDocument(null);
+    }
+  };
+
   const submitApplication = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user) return;
-    if (!affiliate && DOCUMENTS.some((document) => !files[document.id])) {
+    if (!affiliate && DOCUMENTS.some((document) => !files[document.id] && !nativeDocumentPaths[document.id])) {
       toast.error("Upload all three required documents.");
       return;
     }
@@ -144,9 +153,12 @@ function AffiliatePage() {
         bank_proof_path: affiliate?.bank_proof_path || "",
         id_document_path: affiliate?.id_document_path || "",
       };
-      if (files.cipc) paths.cipc_document_path = await uploadDocument("cipc", files.cipc);
-      if (files.bank) paths.bank_proof_path = await uploadDocument("bank", files.bank);
-      if (files.identity) paths.id_document_path = await uploadDocument("identity", files.identity);
+      if (nativeDocumentPaths.cipc) paths.cipc_document_path = nativeDocumentPaths.cipc;
+      else if (files.cipc) paths.cipc_document_path = await uploadDocument("cipc", files.cipc);
+      if (nativeDocumentPaths.bank) paths.bank_proof_path = nativeDocumentPaths.bank;
+      else if (files.bank) paths.bank_proof_path = await uploadDocument("bank", files.bank);
+      if (nativeDocumentPaths.identity) paths.id_document_path = nativeDocumentPaths.identity;
+      else if (files.identity) paths.id_document_path = await uploadDocument("identity", files.identity);
 
       const { error } = await (supabase as any).from("affiliate_profiles").upsert({
         user_id: user.id,
@@ -288,13 +300,27 @@ function AffiliatePage() {
                 <label key={document.id} className="block rounded-xl border border-border p-4">
                   <span className="flex items-center gap-2 text-sm font-medium"><Upload className="h-4 w-4" /> {document.label}</span>
                   {nativePicker ? (
-                    <button
-                      type="button"
-                      onClick={() => void chooseNativeDocument(document.id)}
-                      className="mt-3 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium"
-                    >
-                      {files[document.id]?.name || "Choose document"}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        disabled={uploadingDocument === document.id}
+                        onClick={() => void chooseNativeDocument(document.id)}
+                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-3 text-sm font-medium disabled:opacity-60"
+                      >
+                        {uploadingDocument === document.id ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" /> Attaching document…</>
+                        ) : files[document.id] && nativeDocumentPaths[document.id] ? (
+                          <><CheckCircle2 className="h-4 w-4 text-green-600" /> Attached — choose another</>
+                        ) : (
+                          "Choose document"
+                        )}
+                      </button>
+                      {files[document.id] && nativeDocumentPaths[document.id] && (
+                        <span className="mt-2 block break-all text-xs font-medium text-green-700">
+                          {files[document.id]?.name} ({(files[document.id]!.size / 1024).toFixed(0)} KB)
+                        </span>
+                      )}
+                    </>
                   ) : (
                     <input type="file" required={!affiliate} accept=".pdf,.png,.jpg,.jpeg"
                       onChange={(event) => setFiles({ ...files, [document.id]: event.target.files?.[0] })}
@@ -304,7 +330,7 @@ function AffiliatePage() {
                 </label>
               ))}
             </div>
-            <button disabled={busy} className="w-full rounded-md bg-accent px-5 py-3 font-semibold text-accent-foreground disabled:opacity-60">
+            <button disabled={busy || uploadingDocument !== null} className="w-full rounded-md bg-accent px-5 py-3 font-semibold text-accent-foreground disabled:opacity-60">
               {busy ? "Submitting…" : "Submit for approval"}
             </button>
           </form>
