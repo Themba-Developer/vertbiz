@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { LayoutDashboard, LogIn, LogOut, Menu, PlusCircle, Shield, User as UserIcon } from "lucide-react";
+import { Home, LayoutDashboard, LogIn, LogOut, Menu, PlusCircle, Shield, User as UserIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +50,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link to="/" className="cursor-pointer">
+                      <Home className="h-4 w-4" />
+                      Home
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="cursor-pointer">
                       <LayoutDashboard className="h-4 w-4" />
                       Dashboard
@@ -64,10 +70,10 @@ export function SiteShell({ children }: { children: ReactNode }) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
-                    <Link to="/register" className="cursor-pointer">
+                    <a href="/#pricing" className="cursor-pointer">
                       <PlusCircle className="h-4 w-4" />
-                      Start Registration
-                    </Link>
+                      Choose a Service
+                    </a>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -81,16 +87,22 @@ export function SiteShell({ children }: { children: ReactNode }) {
               ) : (
                 <>
                   <DropdownMenuItem asChild>
+                    <Link to="/" className="cursor-pointer">
+                      <Home className="h-4 w-4" />
+                      Home
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/auth" className="cursor-pointer">
                       <LogIn className="h-4 w-4" />
                       Sign in
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/register" className="cursor-pointer">
+                    <a href="/#pricing" className="cursor-pointer">
                       <PlusCircle className="h-4 w-4" />
-                      Start Registration
-                    </Link>
+                      Choose a Service
+                    </a>
                   </DropdownMenuItem>
                 </>
               )}
@@ -122,24 +134,24 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 >
                   <LogOut className="h-3.5 w-3.5" /> Sign out
                 </button>
-                <Link
-                  to="/register"
+                <a
+                  href="/#pricing"
                   className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition"
                 >
                   Start Registration
-                </Link>
+                </a>
               </div>
             ) : (
               <>
                 <Link to="/auth" className="hover:text-foreground transition-colors">
                   Sign in
                 </Link>
-                <Link
-                  to="/register"
+                <a
+                  href="/#pricing"
                   className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition"
                 >
                   Start Registration
-                </Link>
+                </a>
               </>
             )}
           </nav>

@@ -39,19 +39,52 @@ function RegisterPage() {
   const [errors, setErrors] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
-  // Set service from URL or default to CIPC
-  const serviceId = search.serviceId || "cipc";
+  // A service must be selected explicitly from the service catalogue.
+  const serviceId = search.serviceId || "";
   const service = getService(serviceId);
 
   useEffect(() => {
+    if (!serviceId) {
+      setHydrated(true);
+      return;
+    }
     const loaded = loadRegistration();
     setData(loaded.serviceId && loaded.serviceId !== serviceId ? { ...emptyRegistration(), serviceId } : { ...loaded, serviceId });
     setHydrated(true);
   }, [serviceId]);
 
   useEffect(() => {
-    if (hydrated) saveRegistration(data);
-  }, [data, hydrated]);
+    if (hydrated && serviceId) saveRegistration(data);
+  }, [data, hydrated, serviceId]);
+
+  if (!serviceId || !service) {
+    return (
+      <SiteShell>
+        <div className="max-w-xl mx-auto px-4 sm:px-6 py-16 text-center">
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
+            <h1 className="text-2xl font-bold text-foreground">Choose a service first</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Select the business service you need before starting a new application.
+            </p>
+            <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
+              <a
+                href="/#pricing"
+                className="inline-flex items-center justify-center rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
+              >
+                View Services
+              </a>
+              <a
+                href="/"
+                className="inline-flex items-center justify-center rounded-md border border-border px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-muted"
+              >
+                Back to Home
+              </a>
+            </div>
+          </div>
+        </div>
+      </SiteShell>
+    );
+  }
 
   const update = (partial: Partial<RegistrationDraft>) =>
     setData((d) => ({ ...d, ...partial }));

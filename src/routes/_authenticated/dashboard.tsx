@@ -150,12 +150,12 @@ function Dashboard() {
             <h1 className="text-3xl font-bold text-foreground">My Applications</h1>
             <p className="text-muted-foreground text-sm mt-1">Track and download your completed services.</p>
           </div>
-          <Link
-            to="/register"
+          <a
+            href="/#pricing"
             className="inline-flex items-center gap-2 rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
           >
             <PlusCircle className="h-4 w-4" /> New Application
-          </Link>
+          </a>
         </div>
 
         {anyCompleted && (
@@ -175,12 +175,12 @@ function Dashboard() {
             <FileText className="h-8 w-8 text-muted-foreground mx-auto" />
             <h2 className="mt-4 font-semibold text-foreground">No applications yet</h2>
             <p className="text-sm text-muted-foreground mt-1">Start your first application in just a few minutes.</p>
-            <Link
-              to="/register"
+            <a
+              href="/#pricing"
               className="mt-4 inline-flex items-center gap-2 rounded-md bg-accent text-accent-foreground px-5 py-2.5 text-sm font-semibold hover:opacity-90 transition"
             >
-              Start Now
-            </Link>
+              Choose a Service
+            </a>
           </div>
         ) : (
           <div className="grid gap-4">
