@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import { Lock, ShieldCheck, ArrowLeft } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
-import { emptyRegistration, loadRegistration, clearRegistration, REGISTRATION_FEE, CIPC_PAYFAST_URL, type RegistrationDraft } from "@/lib/registration-store";
+import { emptyRegistration, loadRegistration, clearRegistration, REGISTRATION_FEE, type RegistrationDraft } from "@/lib/registration-store";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { getService } from "@/lib/services";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/checkout")({
   validateSearch: (s: Record<string, unknown>) => ({
     serviceId: typeof s.serviceId === "string" ? s.serviceId : undefined,
+    applicationId: typeof s.applicationId === "string" ? s.applicationId : undefined,
   }),
   head: () => ({
     meta: [
@@ -36,13 +37,43 @@ function CheckoutPage() {
   const primary = data.directors[0];
   const primaryName = data.proposedNames[0] || "Your company";
   const service = getService(data.serviceId || search.serviceId || "cipc") || getService("cipc");
-  const paymentUrl = service?.payfastUrl || CIPC_PAYFAST_URL;
   const amount = service?.price || REGISTRATION_FEE;
+
+  const submitToPayFast = (action: string, fields: Record<string, string>) => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = action;
+    Object.entries(fields).forEach(([name, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  };
 
   const handlePay = async () => {
     if (!user) return;
 
     const serviceId = service?.id || data.serviceId || search.serviceId || "cipc";
+    if (search.applicationId) {
+      setSubmitting(true);
+      try {
+        const { data: checkout, error } = await supabase.functions.invoke("payfast-checkout", {
+          body: { applicationId: search.applicationId },
+        });
+        if (error) throw error;
+        if (!checkout?.action || !checkout?.fields) throw new Error("PayFast checkout could not be created.");
+        submitToPayFast(checkout.action, checkout.fields);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not retry payment.");
+        setSubmitting(false);
+      }
+      return;
+    }
+
     const isCipc = serviceId === "cipc";
     const filesOk = isCipc
       ? data.directorIdFiles.length > 0
@@ -55,8 +86,6 @@ function CheckoutPage() {
 
     setSubmitting(true);
     try {
-      const paymentRef = "VCG-" + Date.now().toString(36).toUpperCase();
-
       const { data: app, error: appErr } = await supabase
         .from("applications")
         .insert({
@@ -67,9 +96,8 @@ function CheckoutPage() {
           directors: data.directors as any,
           proposed_names: isCipc ? data.proposedNames.filter((n) => n.trim()) : [],
           terms_accepted: true,
-          payment_ref: paymentRef,
           submitted_at: new Date().toISOString(),
-          status: "under_review",
+          status: "pending_payment",
         })
         .select()
         .single();
@@ -102,13 +130,15 @@ function CheckoutPage() {
         if (docErr) throw docErr;
       }
 
+      const { data: checkout, error: checkoutError } = await supabase.functions.invoke("payfast-checkout", {
+        body: { applicationId: app.id },
+      });
+      if (checkoutError) throw checkoutError;
+      if (!checkout?.action || !checkout?.fields) throw new Error("PayFast checkout could not be created.");
+
       clearRegistration();
       toast.success("Application saved — redirecting to PayFast…");
-      if (typeof window !== "undefined") {
-        window.location.href = paymentUrl;
-      } else {
-        navigate({ to: "/success", search: { id: app.id } });
-      }
+      submitToPayFast(checkout.action, checkout.fields);
     } catch (err) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : "Submission failed. Please try again.");

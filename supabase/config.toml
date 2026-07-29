@@ -1,1 +1,38 @@
-project_id = "ebxbvualaclubebnnozp"
+project_id = "flbhcliqrynalbpkvmce"
+
+[auth]
+site_url = "https://vertbiz.online"
+additional_redirect_urls = [
+  "https://vertbiz.online/auth",
+  "https://vertbiz.online/auth?mode=reset",
+]
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+max_frequency = "1m"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.email.smtp]
+enabled = true
+host = "smtp.hostinger.com"
+port = 465
+user = "noreply@vertbiz.online"
+pass = "env(SUPABASE_AUTH_SMTP_PASSWORD)"
+admin_email = "noreply@vertbiz.online"
+sender_name = "VertBiz"
+
+[auth.email.template.confirmation]
+subject = "Confirm your VertBiz account"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your VertBiz password"
+content_path = "./supabase/templates/recovery.html"
+
+[functions.payfast-itn]
+verify_jwt = false

@@ -4,7 +4,6 @@ export type Service = {
   tagline: string;
   price: number;
   priceLabel: string;
-  payfastUrl: string;
   features: string[];
   primary?: boolean;
   hasIntakeForm?: boolean;
@@ -19,7 +18,6 @@ export const SERVICES: Service[] = [
     tagline: "Register your Pty (Ltd) with CIPC",
     price: 749.99,
     priceLabel: "R749.99",
-    payfastUrl: "https://payf.st/ox9ab",
     hasIntakeForm: true,
     primary: true,
     requiresProposedNames: true,
@@ -38,7 +36,6 @@ export const SERVICES: Service[] = [
     tagline: "Get CSD-registered to trade with government",
     price: 349.99,
     priceLabel: "R349.99",
-    payfastUrl: "https://payf.st/jalzc",
     hasIntakeForm: true,
     requiresProposedNames: false,
     requiredDocuments: ["id_copy", "cor14_3"],
@@ -50,7 +47,6 @@ export const SERVICES: Service[] = [
     tagline: "Prove your tax status in minutes",
     price: 199,
     priceLabel: "R199",
-    payfastUrl: "https://payf.st/w73bz",
     hasIntakeForm: true,
     requiresProposedNames: false,
     requiredDocuments: ["id_copy", "cor14_3"],
@@ -62,7 +58,6 @@ export const SERVICES: Service[] = [
     tagline: "EME sworn affidavit certificate",
     price: 249.99,
     priceLabel: "R249.99",
-    payfastUrl: "https://payf.st/bjv5s",
     hasIntakeForm: true,
     requiresProposedNames: false,
     requiredDocuments: ["id_copy", "cor14_3"],
@@ -74,7 +69,6 @@ export const SERVICES: Service[] = [
     tagline: "Public Benefit Organisation status",
     price: 2999,
     priceLabel: "R2,999",
-    payfastUrl: "https://payf.st/i15j4",
     hasIntakeForm: true,
     requiresProposedNames: false,
     requiredDocuments: ["id_copy", "cor14_3"],
@@ -86,7 +80,6 @@ export const SERVICES: Service[] = [
     tagline: "Professionally designed profile document",
     price: 249,
     priceLabel: "R249",
-    payfastUrl: "https://payf.st/4nhbq",
     hasIntakeForm: true,
     requiresProposedNames: false,
     requiredDocuments: ["id_copy", "cor14_3"],
@@ -98,7 +91,6 @@ export const SERVICES: Service[] = [
     tagline: "Investor & bank-ready business plan",
     price: 2499,
     priceLabel: "R2,499",
-    payfastUrl: "https://payf.st/hcg75",
     hasIntakeForm: true,
     requiresProposedNames: false,
     requiredDocuments: ["id_copy", "cor14_3"],
@@ -110,7 +102,6 @@ export const SERVICES: Service[] = [
     tagline: "In-depth market & financial feasibility",
     price: 16299,
     priceLabel: "R16,299",
-    payfastUrl: "https://payf.st/znokr",
     hasIntakeForm: true,
     requiresProposedNames: false,
     requiredDocuments: ["id_copy", "cor14_3"],

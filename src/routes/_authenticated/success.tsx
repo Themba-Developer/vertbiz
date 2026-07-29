@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Clock, Download, FileText, Mail } from "lucide-react";
+import { CheckCircle2, Clock, Download, FileText, Loader2, Mail } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -35,29 +35,44 @@ function SuccessPage() {
 
   useEffect(() => {
     if (!id || !user) return;
-    supabase.from("applications").select("*").eq("id", id).maybeSingle().then(({ data }) => {
-      if (data) setApp(data as any);
-      if (data?.certificate_path) {
-        supabase.storage.from("documents").createSignedUrl(data.certificate_path, 3600).then(({ data: s }) => {
-          if (s) setCertUrl(s.signedUrl);
-        });
+    let active = true;
+    const refresh = async () => {
+      const { data } = await supabase.from("applications").select("*").eq("id", id).maybeSingle();
+      if (!active || !data) return;
+      setApp(data as any);
+      if (data.certificate_path) {
+        const { data: signed } = await supabase.storage.from("documents").createSignedUrl(data.certificate_path, 3600);
+        if (active && signed) setCertUrl(signed.signedUrl);
       }
-    });
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 2500);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, [id, user]);
 
   const primaryName = app?.proposed_names?.[0] || "Your company";
   const submitted = app?.submitted_at ? new Date(app.submitted_at).toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" }) : "—";
+  const paymentConfirmed = app?.status === "under_review" || app?.status === "completed";
 
   return (
     <SiteShell>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 rounded-full bg-success/15 flex items-center justify-center">
-            <CheckCircle2 className="h-9 w-9 text-success" />
+          <div className={`mx-auto h-16 w-16 rounded-full flex items-center justify-center ${paymentConfirmed ? "bg-success/15" : "bg-accent/15"}`}>
+            {paymentConfirmed
+              ? <CheckCircle2 className="h-9 w-9 text-success" />
+              : <Loader2 className="h-9 w-9 text-accent animate-spin" />}
           </div>
-          <h1 className="mt-5 text-3xl sm:text-4xl font-bold text-foreground">Payment received — application submitted</h1>
+          <h1 className="mt-5 text-3xl sm:text-4xl font-bold text-foreground">
+            {paymentConfirmed ? "Payment received — application submitted" : "Confirming your payment…"}
+          </h1>
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-            Thank you. We've received your registration for <strong className="text-foreground">{primaryName}</strong> and lodged it for review.
+            {paymentConfirmed
+              ? <>Thank you. We've received your registration for <strong className="text-foreground">{primaryName}</strong> and lodged it for review.</>
+              : "PayFast is confirming the transaction. This page will update automatically."}
           </p>
         </div>
 

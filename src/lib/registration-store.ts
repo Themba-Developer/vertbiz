@@ -80,4 +80,3 @@ export const clearRegistration = () => {
 };
 
 export const REGISTRATION_FEE = 749.99;
-export const CIPC_PAYFAST_URL = "https://payf.st/ox9ab";

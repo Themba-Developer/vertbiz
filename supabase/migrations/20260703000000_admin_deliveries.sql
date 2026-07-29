@@ -20,12 +20,16 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.application_deliveries TO authent
 GRANT ALL ON public.application_deliveries TO service_role;
 ALTER TABLE public.application_deliveries ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users see own deliveries, admins see all"
+DROP POLICY IF EXISTS "Users see own deliveries, admins see all"
+ON public.application_deliveries;
+CREATE POLICY "Users see own deliveries, admins see all"
 ON public.application_deliveries FOR SELECT TO authenticated USING (
   public.has_role(auth.uid(),'admin')
   OR EXISTS (SELECT 1 FROM public.applications a WHERE a.id = application_id AND a.user_id = auth.uid())
 );
 
-CREATE POLICY IF NOT EXISTS "Admins can insert deliveries"
+DROP POLICY IF EXISTS "Admins can insert deliveries"
+ON public.application_deliveries;
+CREATE POLICY "Admins can insert deliveries"
 ON public.application_deliveries FOR INSERT TO authenticated
 WITH CHECK (public.has_role(auth.uid(),'admin'));

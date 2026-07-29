@@ -116,24 +116,13 @@ function Landing() {
                   ))}
                 </ul>
                 <div className="px-5 pb-5 pt-2">
-                  {s.hasIntakeForm ? (
-                    <Link
-                      to="/register"
-                      search={{ serviceId: s.id }}
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition"
-                    >
-                      Start {s.name} <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  ) : (
-                    <a
-                      href={s.payfastUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition"
-                    >
-                      Buy Now <ArrowRight className="h-4 w-4" />
-                    </a>
-                  )}
+                  <Link
+                    to="/register"
+                    search={{ serviceId: s.id }}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition"
+                  >
+                    Start {s.name} <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
             ))}

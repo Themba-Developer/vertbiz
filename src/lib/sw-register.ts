@@ -1,5 +1,4 @@
-// Guarded service worker registration. Registers only in production browser
-// contexts — never in Lovable preview, dev, or inside an iframe.
+// Guarded service worker registration for production browser contexts.
 
 const baseUrl = import.meta.env.BASE_URL || "/";
 const SW_SCOPE = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
@@ -14,11 +13,6 @@ function shouldSkipRegistration(): boolean {
   } catch {
     return true;
   }
-  const host = window.location.hostname;
-  if (host.startsWith("id-preview--") || host.startsWith("preview--")) return true;
-  if (host === "lovableproject.com" || host.endsWith(".lovableproject.com")) return true;
-  if (host === "lovableproject-dev.com" || host.endsWith(".lovableproject-dev.com")) return true;
-  if (host === "beta.lovable.dev" || host.endsWith(".beta.lovable.dev")) return true;
   if (new URL(window.location.href).searchParams.get("sw") === "off") return true;
   return false;
 }

@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { SiteShell } from "@/components/SiteShell";
@@ -10,7 +9,7 @@ import { z } from "zod";
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     redirect: typeof s.redirect === "string" ? s.redirect : undefined,
-    mode: s.mode === "signup" ? "signup" : "signin",
+    mode: s.mode === "signup" || s.mode === "forgot" || s.mode === "reset" ? s.mode : "signin",
   }),
   head: () => ({
     meta: [
@@ -22,18 +21,19 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
   const navigate = useNavigate();
   const search = useSearch({ from: "/auth" });
   const { user, loading } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">(search.mode);
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "reset">(search.mode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   useEffect(() => {
-    if (otpSent) return;
+    if (confirmationSent || mode === "reset") return;
     if (!loading && user) {
       const redirect = search.redirect?.startsWith("/") ? search.redirect : "/dashboard";
       if (redirect.includes("?") || redirect.includes("#")) {
@@ -42,7 +42,7 @@ function AuthPage() {
         navigate({ to: redirect });
       }
     }
-  }, [user, loading, navigate, search.redirect, otpSent]);
+  }, [user, loading, navigate, search.redirect, confirmationSent, mode]);
 
   const validate = () => {
     const schema = z.object({
@@ -63,17 +63,17 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error: otpError } = await supabase.auth.signInWithOtp({
+        const { error: signupError } = await supabase.auth.signUp({
           email,
+          password,
           options: {
-            shouldCreateUser: true,
-            emailRedirectTo: window.location.origin + "/auth",
+            emailRedirectTo: `${siteUrl}/auth`,
           },
         });
-        if (otpError) throw otpError;
+        if (signupError) throw signupError;
 
-        toast.success("Verification code sent to your email.");
-        setOtpSent(true);
+        toast.success("Confirmation email sent.");
+        setConfirmationSent(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -86,41 +86,63 @@ function AuthPage() {
     }
   };
 
-  const handleOtpVerify = async (e: React.FormEvent) => {
+  const handleGoogle = async () => {
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${siteUrl}/auth`,
+      },
+    });
+    if (error) {
+      toast.error(error.message || "Google sign-in failed");
+      setBusy(false);
+    }
+  };
+
+  const handlePasswordResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp.trim()) {
-      toast.error("Please enter the verification code");
+    const parsed = z.string().trim().email("Enter a valid email").max(255).safeParse(email);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message);
       return;
     }
     setBusy(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: "email",
+      const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
+        redirectTo: `${siteUrl}/auth?mode=reset`,
       });
       if (error) throw error;
-
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
-
-      toast.success("Email verified. Your account is ready.");
-      setOtp("");
-      setOtpSent(false);
+      toast.success("If an account exists, a password reset email has been sent.");
+      setMode("signin");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "OTP verification failed");
+      toast.error(err instanceof Error ? err.message : "Password reset email could not be sent.");
     } finally {
       setBusy(false);
     }
   };
 
-  const handleGoogle = async () => {
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth",
-    });
-    if (result.error) {
-      toast.error("Google sign-in failed");
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      toast.success("Your password has been updated.");
+      setPassword("");
+      setConfirmPassword("");
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Password could not be updated.");
+    } finally {
       setBusy(false);
     }
   };
@@ -132,15 +154,23 @@ function AuthPage() {
           <div className="flex flex-col items-center mb-6">
             <img src="/Logo_Official_1.png" alt="Vert Corp Group" className="h-16 w-16 object-contain" />
             <h1 className="mt-4 text-2xl font-bold text-foreground">
-              {otpSent
-                ? "Verify your email"
+              {confirmationSent
+                ? "Check your email"
+                : mode === "forgot"
+                ? "Reset your password"
+                : mode === "reset"
+                ? "Choose a new password"
                 : mode === "signup"
                 ? "Create your account"
                 : "Welcome back"}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground text-center">
-              {otpSent
-                ? `Enter the verification code sent to ${email}`
+              {confirmationSent
+                ? `We sent an account confirmation link to ${email}.`
+                : mode === "forgot"
+                ? "Enter your account email and we'll send a secure reset link."
+                : mode === "reset"
+                ? "Enter and confirm your new account password."
                 : mode === "signup"
                 ? "Sign up to submit and track your registrations."
                 : "Sign in to continue your company registration."}
@@ -148,36 +178,70 @@ function AuthPage() {
           </div>
 
           <div className="rounded-2xl border border-border bg-card shadow-card p-6">
-            {otpSent ? (
-              <form onSubmit={handleOtpVerify} className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-foreground">Verification Code</label>
-                  <input
-                    type="text"
-                    required
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    placeholder="Enter 6-digit code"
-                    maxLength={6}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className="w-full rounded-md bg-accent text-accent-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-60"
-                >
-                  {busy ? "Verifying..." : "Verify email"}
-                </button>
+            {confirmationSent ? (
+              <div className="space-y-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Open the email from VertBiz and select the confirmation link to activate your account.
+                </p>
                 <button
                   type="button"
                   onClick={() => {
-                    setOtpSent(false);
-                    setOtp("");
+                    setConfirmationSent(false);
+                    setMode("signin");
                   }}
                   className="w-full text-sm text-muted-foreground hover:text-foreground"
                 >
-                  Back to signup
+                  Back to sign in
+                </button>
+              </div>
+            ) : mode === "forgot" ? (
+              <form onSubmit={handlePasswordResetRequest} className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <button type="submit" disabled={busy} className="w-full rounded-md bg-accent text-accent-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-60">
+                  {busy ? "Sending..." : "Send reset link"}
+                </button>
+                <button type="button" onClick={() => setMode("signin")} className="w-full text-sm text-muted-foreground hover:text-foreground">
+                  Back to sign in
+                </button>
+              </form>
+            ) : mode === "reset" ? (
+              <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground">New password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="At least 8 characters"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground">Confirm new password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Repeat your new password"
+                  />
+                </div>
+                <button type="submit" disabled={busy} className="w-full rounded-md bg-accent text-accent-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-60">
+                  {busy ? "Updating..." : "Update password"}
                 </button>
               </form>
             ) : (
@@ -228,6 +292,15 @@ function AuthPage() {
                   >
                     {busy ? "Please wait..." : mode === "signup" ? "Create account" : "Sign in"}
                   </button>
+                  {mode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => setMode("forgot")}
+                      className="w-full text-sm text-primary hover:underline"
+                    >
+                      Forgot your password?
+                    </button>
+                  )}
                 </form>
 
                 <div className="mt-5 text-center text-sm text-muted-foreground">
