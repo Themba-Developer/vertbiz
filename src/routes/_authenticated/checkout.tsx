@@ -5,6 +5,7 @@ import { SiteShell } from "@/components/SiteShell";
 import { emptyRegistration, loadRegistration, clearRegistration, REGISTRATION_FEE, type RegistrationDraft } from "@/lib/registration-store";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { documentContentType } from "@/lib/document-files";
 import { getService } from "@/lib/services";
 import { toast } from "sonner";
 
@@ -150,7 +151,7 @@ function CheckoutPage() {
         const safeName = u.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         const path = `${user.id}/${app.id}/${u.kind}/${crypto.randomUUID()}-${safeName}`;
         const { error: upErr } = await supabase.storage.from("documents").upload(path, u.file, {
-          contentType: u.file.type,
+          contentType: documentContentType(u.file),
           upsert: false,
         });
         if (upErr) throw upErr;
@@ -160,7 +161,7 @@ function CheckoutPage() {
           storage_path: path,
           file_name: u.file.name,
           size_bytes: u.file.size,
-          mime_type: u.file.type,
+          mime_type: documentContentType(u.file),
           uploaded_by: user.id,
         });
         if (docErr) throw docErr;

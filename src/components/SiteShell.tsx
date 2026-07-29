@@ -1,18 +1,17 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { Handshake, Home, LayoutDashboard, LogIn, LogOut, Menu, PlusCircle, Settings, Shield, User as UserIcon } from "lucide-react";
+import { Handshake, Home, LayoutDashboard, LogIn, LogOut, Menu, PlusCircle, Settings, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 export function SiteShell({ children }: { children: ReactNode }) {
-  const { user, isAdmin, affiliateBusinessName, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -44,13 +43,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <DropdownMenuContent align="end" className="w-64 sm:hidden">
               {user ? (
                 <>
-                  <DropdownMenuLabel className="font-normal">
-                    <span className="block text-xs text-muted-foreground">
-                      {affiliateBusinessName ? "Business account" : "Signed in as"}
-                    </span>
-                    <span className="block truncate font-medium">{affiliateBusinessName || user.email}</span>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/" className="cursor-pointer">
                       <Home className="h-4 w-4" />
@@ -66,7 +58,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   <DropdownMenuItem asChild>
                     <Link to="/affiliate" className="cursor-pointer">
                       <Handshake className="h-4 w-4" />
-                      Affiliate Account
+                      Account History
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -131,7 +123,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   Dashboard
                 </Link>
                 <Link to="/affiliate" className="hover:text-foreground transition-colors">
-                  Affiliate
+                  Account History
                 </Link>
                 <Link to="/settings" className="hover:text-foreground transition-colors">
                   Settings
@@ -145,10 +137,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
             )}
             {user ? (
               <div className="flex items-center gap-3 pl-2 border-l border-border">
-                <span className="hidden md:inline text-xs text-muted-foreground max-w-[160px] truncate">
-                  <UserIcon className="h-3 w-3 inline mr-1" />
-                  {affiliateBusinessName || user.email}
-                </span>
                 <button
                   onClick={handleSignOut}
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"

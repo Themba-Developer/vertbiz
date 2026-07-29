@@ -211,7 +211,7 @@ function AdminPage() {
           const path = `${app.user_id}/${appId}/delivered/${crypto.randomUUID()}-${safeName}`;
           const { error: upErr } = await supabase.storage
             .from("documents")
-            .upload(path, file, { contentType: file.type, upsert: false });
+            .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
           if (upErr) throw upErr;
           const { error: delErr } = await supabase.from("application_deliveries").insert({
             application_id: appId,
@@ -219,7 +219,7 @@ function AdminPage() {
             file_path: path,
             file_name: file.name,
             size_bytes: file.size,
-            mime_type: file.type,
+            mime_type: file.type || "application/octet-stream",
           });
           if (delErr) throw delErr;
         }

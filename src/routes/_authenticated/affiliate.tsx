@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { SiteShell } from "@/components/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { documentContentType, isSupportedDocument } from "@/lib/document-files";
 
 type Affiliate = {
   user_id: string;
@@ -99,14 +100,14 @@ function AffiliatePage() {
 
   const uploadDocument = async (kind: string, file: File) => {
     if (!user) throw new Error("You must be signed in.");
-    if (!["application/pdf", "image/png", "image/jpeg"].includes(file.type)) {
+    if (!isSupportedDocument(file)) {
       throw new Error("Documents must be PDF, PNG or JPG.");
     }
     if (file.size > 5 * 1024 * 1024) throw new Error("Each document must be under 5MB.");
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${user.id}/affiliate/${kind}/${crypto.randomUUID()}-${safeName}`;
     const { error } = await supabase.storage.from("documents").upload(path, file, {
-      contentType: file.type,
+      contentType: documentContentType(file),
       upsert: false,
     });
     if (error) throw error;

@@ -13,6 +13,7 @@ import {
 } from "@/lib/registration-store";
 import { useAuth } from "@/lib/auth-context";
 import { getService } from "@/lib/services";
+import { isSupportedDocument } from "@/lib/document-files";
 
 export const Route = createFileRoute("/_authenticated/register")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -28,8 +29,6 @@ export const Route = createFileRoute("/_authenticated/register")({
 });
 
 const MAX_BYTES = 5 * 1024 * 1024;
-const ACCEPTED = ["application/pdf", "image/png", "image/jpeg"];
-
 function RegisterPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/register" });
@@ -492,7 +491,7 @@ function DocumentsStep({
     const accepted: File[] = [];
     const errs: string[] = [];
     Array.from(files).forEach((f) => {
-      if (!ACCEPTED.includes(f.type)) {
+      if (!isSupportedDocument(f)) {
         errs.push(`${f.name}: unsupported file type`);
         return;
       }
@@ -547,30 +546,26 @@ function Uploader({
   onRemove: (i: number) => void;
   multiple?: boolean;
 }) {
-  const id = useMemo(() => `up-${Math.random().toString(36).slice(2, 9)}`, []);
   return (
     <div className="rounded-xl border border-border bg-surface/60 p-5">
       <div className="font-semibold text-foreground">{title}</div>
       <div className="text-xs text-muted-foreground mt-1">{helper}</div>
-      <label
-        htmlFor={id}
-        className="mt-4 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-4 py-8 cursor-pointer hover:bg-secondary transition"
-      >
-        <Upload className="h-5 w-5 text-muted-foreground" />
-        <div className="text-sm text-foreground font-medium">Click to upload or drag and drop</div>
-        <div className="text-xs text-muted-foreground">PDF, PNG, JPG — max 5MB</div>
+      <div className="relative mt-4 flex flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border border-dashed border-border bg-card px-4 py-8 hover:bg-secondary transition">
+        <Upload className="pointer-events-none h-5 w-5 text-muted-foreground" />
+        <div className="pointer-events-none text-sm text-foreground font-medium">Tap to choose or upload a file</div>
+        <div className="pointer-events-none text-xs text-muted-foreground">PDF, PNG, JPG — max 5MB</div>
         <input
-          id={id}
           type="file"
           multiple={multiple}
           accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-          className="sr-only"
+          aria-label={`Upload ${title}`}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           onChange={(e) => {
             onAdd(e.target.files);
             e.target.value = "";
           }}
         />
-      </label>
+      </div>
       {files.length > 0 && (
         <ul className="mt-4 space-y-2">
           {files.map((f, i) => (
