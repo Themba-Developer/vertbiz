@@ -13,7 +13,7 @@ import {
 } from "@/lib/registration-store";
 import { useAuth } from "@/lib/auth-context";
 import { getService } from "@/lib/services";
-import { isSupportedDocument } from "@/lib/document-files";
+import { isSupportedDocument, pickNativeDocuments, usesNativeDocumentPicker } from "@/lib/document-files";
 
 export const Route = createFileRoute("/_authenticated/register")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -483,7 +483,7 @@ function DocumentsStep({
   const service = serviceId ? getService(serviceId) : null;
 
   const handleFiles = (
-    files: FileList | null,
+    files: FileList | File[] | null,
     target: string,
     current: File[]
   ) => {
@@ -542,10 +542,21 @@ function Uploader({
   title: string;
   helper: string;
   files: File[];
-  onAdd: (f: FileList | null) => void;
+  onAdd: (f: FileList | File[] | null) => void;
   onRemove: (i: number) => void;
   multiple?: boolean;
 }) {
+  const nativePicker = usesNativeDocumentPicker();
+
+  const chooseNativeFiles = async () => {
+    try {
+      onAdd(await pickNativeDocuments(multiple));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "The selected file could not be read.";
+      if (!/cancel/i.test(message)) alert(message);
+    }
+  };
+
   return (
     <div className="rounded-xl border border-border bg-surface/60 p-5">
       <div className="font-semibold text-foreground">{title}</div>
@@ -554,17 +565,28 @@ function Uploader({
         <Upload className="pointer-events-none h-5 w-5 text-muted-foreground" />
         <div className="pointer-events-none text-sm text-foreground font-medium">Tap to choose or upload a file</div>
         <div className="pointer-events-none text-xs text-muted-foreground">PDF, PNG, JPG — max 5MB</div>
-        <input
-          type="file"
-          multiple={multiple}
-          accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-          aria-label={`Upload ${title}`}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          onChange={(e) => {
-            onAdd(e.target.files);
-            e.target.value = "";
-          }}
-        />
+        {nativePicker ? (
+          <button
+            type="button"
+            aria-label={`Upload ${title}`}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            onClick={() => void chooseNativeFiles()}
+          >
+            Choose file
+          </button>
+        ) : (
+          <input
+            type="file"
+            multiple={multiple}
+            accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+            aria-label={`Upload ${title}`}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            onChange={(e) => {
+              onAdd(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        )}
       </div>
       {files.length > 0 && (
         <ul className="mt-4 space-y-2">

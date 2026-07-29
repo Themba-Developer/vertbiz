@@ -5,7 +5,12 @@ import { toast } from "sonner";
 import { SiteShell } from "@/components/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { documentContentType, isSupportedDocument } from "@/lib/document-files";
+import {
+  documentContentType,
+  isSupportedDocument,
+  pickNativeDocuments,
+  usesNativeDocumentPicker,
+} from "@/lib/document-files";
 
 type Affiliate = {
   user_id: string;
@@ -56,6 +61,17 @@ function AffiliatePage() {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const nativePicker = usesNativeDocumentPicker();
+
+  const chooseNativeDocument = async (documentId: string) => {
+    try {
+      const [file] = await pickNativeDocuments(false);
+      if (file) setFiles((current) => ({ ...current, [documentId]: file }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "The selected file could not be read.";
+      if (!/cancel/i.test(message)) toast.error(message);
+    }
+  };
 
   const loadAffiliate = async () => {
     if (!user) return;
@@ -271,9 +287,19 @@ function AffiliatePage() {
               {DOCUMENTS.map((document) => (
                 <label key={document.id} className="block rounded-xl border border-border p-4">
                   <span className="flex items-center gap-2 text-sm font-medium"><Upload className="h-4 w-4" /> {document.label}</span>
-                  <input type="file" required={!affiliate} accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(event) => setFiles({ ...files, [document.id]: event.target.files?.[0] })}
-                    className="mt-3 block w-full text-sm text-muted-foreground" />
+                  {nativePicker ? (
+                    <button
+                      type="button"
+                      onClick={() => void chooseNativeDocument(document.id)}
+                      className="mt-3 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium"
+                    >
+                      {files[document.id]?.name || "Choose document"}
+                    </button>
+                  ) : (
+                    <input type="file" required={!affiliate} accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(event) => setFiles({ ...files, [document.id]: event.target.files?.[0] })}
+                      className="mt-3 block w-full text-sm text-muted-foreground" />
+                  )}
                   {affiliate && <span className="mt-2 block text-xs text-muted-foreground">Leave empty to keep the document already submitted.</span>}
                 </label>
               ))}

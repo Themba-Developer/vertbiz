@@ -20,6 +20,7 @@
     "@capacitor/keyboard": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
+    "@capawesome/capacitor-file-picker": "^8.0.0",
     "@capgo/capacitor-native-biometric": "^8.3.7",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
