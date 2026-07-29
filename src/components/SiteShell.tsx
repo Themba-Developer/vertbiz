@@ -1,7 +1,15 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { LogOut, User as UserIcon, Shield } from "lucide-react";
+import { LayoutDashboard, LogIn, LogOut, Menu, PlusCircle, Shield, User as UserIcon } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function SiteShell({ children }: { children: ReactNode }) {
   const { user, isAdmin, signOut } = useAuth();
@@ -23,11 +31,71 @@ export function SiteShell({ children }: { children: ReactNode }) {
               <div className="text-[11px] text-muted-foreground -mt-0.5">CIPC Registration Services</div>
             </div>
           </Link>
-          {isAdmin && (
-            <Link to="/admin" className="sm:hidden inline-flex items-center gap-1 rounded-md border border-primary/30 px-3 py-1.5 text-xs text-primary font-medium">
-              <Shield className="h-3.5 w-3.5" /> Admin
-            </Link>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="sm:hidden inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-background text-foreground"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 sm:hidden">
+              {user ? (
+                <>
+                  <DropdownMenuLabel className="font-normal">
+                    <span className="block text-xs text-muted-foreground">Signed in as</span>
+                    <span className="block truncate font-medium">{user.email}</span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="cursor-pointer">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="cursor-pointer">
+                        <Shield className="h-4 w-4" />
+                        Admin
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link to="/register" className="cursor-pointer">
+                      <PlusCircle className="h-4 w-4" />
+                      Start Registration
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onSelect={() => void handleSignOut()}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/auth" className="cursor-pointer">
+                      <LogIn className="h-4 w-4" />
+                      Sign in
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/register" className="cursor-pointer">
+                      <PlusCircle className="h-4 w-4" />
+                      Start Registration
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <nav className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <a href="/#pricing" className="hover:text-foreground transition-colors">Pricing</a>
