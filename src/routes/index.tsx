@@ -56,11 +56,14 @@ function Landing() {
           <Link
             to="/auth"
             search={{ mode: "signup", redirect: "/affiliate" }}
-            className="mt-4 inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline"
+            className="mt-5 inline-flex items-center justify-center gap-2 rounded-md border-2 border-primary bg-primary px-6 py-3 text-base font-bold text-primary-foreground shadow-elegant transition hover:opacity-90"
           >
             <Handshake className="h-4 w-4" />
-            Sign up as an Affiliate
+            REGISTER AS AN AFFILIATE
           </Link>
+          <p className="mt-2 text-xs font-medium text-muted-foreground">
+            Earn 25% commission on successfully paid services.
+          </p>
 
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
             {[

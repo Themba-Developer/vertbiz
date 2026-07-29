@@ -4,7 +4,7 @@ import { SiteShell } from "@/components/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { StatusBadge, type AppStatus } from "@/components/StatusBadge";
-import { CreditCard, Download, FileText, PlusCircle, PartyPopper, Trash2 } from "lucide-react";
+import { CreditCard, Download, FileText, Handshake, PlusCircle, PartyPopper, Trash2, Wallet } from "lucide-react";
 import { getService } from "@/lib/services";
 import { toast } from "sonner";
 import {
@@ -55,6 +55,9 @@ function Dashboard() {
   const [deliveries, setDeliveries] = useState<Record<string, Delivery[]>>({});
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [affiliate, setAffiliate] = useState<{ company_name: string; status: string } | null>(null);
+  const [affiliateBalance, setAffiliateBalance] = useState(0);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -81,6 +84,29 @@ function Dashboard() {
           (grouped[d.application_id] ||= []).push(d);
         });
         setDeliveries(grouped);
+      }
+
+      const { data: affiliateData, error: affiliateError } = await (supabase as any)
+        .from("affiliate_profiles")
+        .select("company_name,status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (affiliateError) {
+        toast.error(`Affiliate account could not be loaded: ${affiliateError.message}`);
+      } else {
+        setAffiliate(affiliateData);
+        if (affiliateData?.status === "approved") {
+          const { data: balanceData, error: balanceError } = await (supabase as any)
+            .from("affiliate_balances")
+            .select("available_balance")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (balanceError) {
+            toast.error(`Affiliate balance could not be loaded: ${balanceError.message}`);
+          } else {
+            setAffiliateBalance(Number(balanceData?.available_balance || 0));
+          }
+        }
       }
       setLoading(false);
     })();
@@ -142,6 +168,21 @@ function Dashboard() {
 
   const anyCompleted = rows.some((r) => r.admin_delivered);
 
+  const requestWithdrawal = async () => {
+    if (affiliateBalance <= 0) return;
+    setWithdrawing(true);
+    try {
+      const { error } = await (supabase as any).rpc("request_affiliate_withdrawal");
+      if (error) throw error;
+      setAffiliateBalance(0);
+      toast.success("Withdrawal requested. Your funds will be paid within 24 hours.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Withdrawal could not be requested.");
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   return (
     <SiteShell>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
@@ -157,6 +198,44 @@ function Dashboard() {
             <PlusCircle className="h-4 w-4" /> New Application
           </a>
         </div>
+
+        {affiliate && (
+          <section className={`mb-6 rounded-2xl border p-5 ${
+            affiliate.status === "approved" ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <Handshake className={`h-6 w-6 mt-0.5 ${affiliate.status === "approved" ? "text-green-700" : "text-amber-700"}`} />
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wide">
+                    {affiliate.status === "approved" ? "Approved affiliate business account" : "Affiliate approval pending"}
+                  </div>
+                  <h2 className="text-lg font-semibold">{affiliate.company_name}</h2>
+                  {affiliate.status !== "approved" && (
+                    <p className="text-sm mt-1">The admin must approve your application before commissions are activated.</p>
+                  )}
+                </div>
+              </div>
+              {affiliate.status === "approved" && (
+                <div className="flex flex-col sm:items-end gap-2">
+                  <div>
+                    <div className="text-xs text-green-800">Available Balance</div>
+                    <div className="text-2xl font-bold text-green-950">R{affiliateBalance.toFixed(2)}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={requestWithdrawal}
+                    disabled={withdrawing || affiliateBalance <= 0}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-green-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    {withdrawing ? "Requesting…" : "Withdraw"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {anyCompleted && (
           <div className="mb-6 rounded-xl border border-green-300 bg-green-50 text-green-900 p-5 flex items-start gap-3">

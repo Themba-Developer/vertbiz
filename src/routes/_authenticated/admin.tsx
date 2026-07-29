@@ -99,10 +99,15 @@ function AdminPage() {
         })
       );
       setApplications(enriched as ApplicationWithDocs[]);
-      const [{ data: affiliateData }, { data: withdrawalData }] = await Promise.all([
-        (supabase as any).from("affiliate_profiles").select("*").order("created_at", { ascending: false }),
+      const [
+        { data: affiliateData, error: affiliateError },
+        { data: withdrawalData, error: withdrawalError },
+      ] = await Promise.all([
+        (supabase as any).rpc("get_admin_affiliates"),
         (supabase as any).from("withdrawal_requests").select("*").order("requested_at", { ascending: false }),
       ]);
+      if (affiliateError) throw new Error(`Affiliate applications: ${affiliateError.message}`);
+      if (withdrawalError) throw new Error(`Affiliate withdrawals: ${withdrawalError.message}`);
       setAffiliates(affiliateData || []);
       setWithdrawals(withdrawalData || []);
     } catch (err) {
@@ -118,13 +123,11 @@ function AdminPage() {
       ? window.prompt("Reason for rejection or changes required:")?.trim()
       : null;
     if (status === "rejected" && !rejectionReason) return;
-    const { error } = await (supabase as any).from("affiliate_profiles").update({
-      status,
-      rejection_reason: rejectionReason,
-      approved_at: status === "approved" ? new Date().toISOString() : null,
-      approved_by: status === "approved" ? (await supabase.auth.getUser()).data.user?.id : null,
-      updated_at: new Date().toISOString(),
-    }).eq("user_id", userId);
+    const { error } = await (supabase as any).rpc("review_affiliate", {
+      affiliate_user_id: userId,
+      review_status: status,
+      review_reason: rejectionReason,
+    });
     if (error) {
       toast.error(error.message);
       return;
