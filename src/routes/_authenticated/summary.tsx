@@ -38,9 +38,13 @@ function SummaryPage() {
 
   const service = data.serviceId ? getService(data.serviceId) : getService("cipc");
   const isCipc = service?.id === "cipc";
-  const hasFiles = isCipc
-    ? data.directorIdFiles.length > 0
-    : data.idCopies.length > 0 && data.proofOfAddress.length > 0;
+  const applicableDocuments =
+    service?.documents.filter(
+      (document) => !document.requiredWhen || data.answers[document.requiredWhen.fieldId] === document.requiredWhen.equals
+    ) ?? [];
+  const hasFiles = applicableDocuments
+    .filter((document) => document.required || document.requiredWhen)
+    .every((document) => (data.documentFiles[document.id]?.length ?? 0) > 0);
 
   const handleCheckout = () => {
     if (!data.termsAccepted) {
@@ -122,16 +126,26 @@ function SummaryPage() {
             </Section>
           )}
 
+          <Section title="Service information">
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              {service?.intakeFields.map((field) => (
+                <div key={field.id} className={field.type === "textarea" ? "sm:col-span-2" : undefined}>
+                  <dt className="text-muted-foreground">{field.label}</dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-foreground">{data.answers[field.id] || "—"}</dd>
+                </div>
+              ))}
+            </dl>
+          </Section>
+
           <Section title="Uploaded documents">
             <div className="grid gap-4 sm:grid-cols-2">
-              {isCipc ? (
-                <DocList title="All Director ID Copies" files={data.directorIdFiles} />
-              ) : (
-                <>
-                  <DocList title="ID Copy" files={data.idCopies} />
-                  <DocList title="CIPC COR14.3" files={data.proofOfAddress} />
-                </>
-              )}
+              {applicableDocuments.map((document) => (
+                <DocList
+                  key={document.id}
+                  title={`${document.title}${document.required || document.requiredWhen ? "" : " (optional)"}`}
+                  files={data.documentFiles[document.id] ?? []}
+                />
+              ))}
             </div>
           </Section>
 

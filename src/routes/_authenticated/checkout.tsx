@@ -108,9 +108,14 @@ function CheckoutPage() {
     }
 
     const isCipc = serviceId === "cipc";
-    const filesOk = isCipc
-      ? data.directorIdFiles.length > 0
-      : data.idCopies.length > 0 && data.proofOfAddress.length > 0;
+    const applicableDocuments =
+      service?.documents.filter(
+        (document) =>
+          !document.requiredWhen || data.answers[document.requiredWhen.fieldId] === document.requiredWhen.equals
+      ) ?? [];
+    const filesOk = applicableDocuments
+      .filter((document) => document.required || document.requiredWhen)
+      .every((document) => (data.documentFiles[document.id]?.length ?? 0) > 0);
     if (!filesOk) {
       toast.error("All required documents must be uploaded.");
       navigate({ to: "/register" });
@@ -129,6 +134,7 @@ function CheckoutPage() {
           directors: data.directors as any,
           proposed_names: isCipc ? data.proposedNames.filter((n) => n.trim()) : [],
           terms_accepted: true,
+          intake_answers: data.answers,
           submitted_at: new Date().toISOString(),
           status: "pending_payment",
         })
@@ -136,12 +142,9 @@ function CheckoutPage() {
         .single();
       if (appErr) throw appErr;
 
-      const uploads: { file: File; kind: "id_copy" | "proof_of_address" | "director_id" }[] = isCipc
-        ? data.directorIdFiles.map((f) => ({ file: f, kind: "director_id" as const }))
-        : [
-            ...data.idCopies.map((f) => ({ file: f, kind: "id_copy" as const })),
-            ...data.proofOfAddress.map((f) => ({ file: f, kind: "proof_of_address" as const })),
-          ];
+      const uploads = applicableDocuments.flatMap((document) =>
+        (data.documentFiles[document.id] ?? []).map((file) => ({ file, kind: document.id }))
+      );
 
       for (const u of uploads) {
         const safeName = u.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");

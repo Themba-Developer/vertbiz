@@ -45,7 +45,7 @@ function RegisterPage() {
 
   useEffect(() => {
     const loaded = loadRegistration();
-    setData((d) => ({ ...d, ...loaded, serviceId }));
+    setData(loaded.serviceId && loaded.serviceId !== serviceId ? { ...emptyRegistration(), serviceId } : { ...loaded, serviceId });
     setHydrated(true);
   }, [serviceId]);
 
@@ -58,11 +58,12 @@ function RegisterPage() {
 
   // Build steps dynamically based on service
   const buildSteps = (): Step[] => {
-    const steps: Step[] = [{ id: 1, label: "Director Details" }];
+    const steps: Step[] = [{ id: 1, label: service?.id === "cipc" ? "Director Details" : "Applicant Details" }];
+    steps.push({ id: 2, label: "Service Information" });
     if (service?.requiresProposedNames) {
-      steps.push({ id: 2, label: "Company Names" });
+      steps.push({ id: 3, label: "Company Names" });
     }
-    steps.push({ id: service?.requiresProposedNames ? 3 : 2, label: "Documents" });
+    steps.push({ id: service?.requiresProposedNames ? 4 : 3, label: "Documents" });
     return steps;
   };
 
@@ -76,15 +77,26 @@ function RegisterPage() {
         const idx = i + 1;
         if (!d.fullNames.trim()) errs.push(`Director ${idx}: full names required.`);
         if (!d.surname.trim()) errs.push(`Director ${idx}: surname required.`);
-        if (!/^\d{13}$/.test(d.idNumber)) errs.push(`Director ${idx}: SA ID must be 13 digits.`);
+        if (d.identityType === "sa_id" && !/^\d{13}$/.test(d.idNumber))
+          errs.push(`${service?.id === "cipc" ? `Director ${idx}` : "Applicant"}: SA ID must be 13 digits.`);
+        if (d.identityType === "passport" && d.idNumber.trim().length < 5)
+          errs.push(`${service?.id === "cipc" ? `Director ${idx}` : "Applicant"}: valid passport number required.`);
+        if (d.identityType === "passport" && !d.nationality.trim())
+          errs.push(`${service?.id === "cipc" ? `Director ${idx}` : "Applicant"}: nationality required.`);
         if (!/^\S+@\S+\.\S+$/.test(d.email)) errs.push(`Director ${idx}: valid email required.`);
         if (d.phone.replace(/\D/g, "").length < 9) errs.push(`Director ${idx}: valid phone required.`);
         if (!d.address.trim()) errs.push(`Director ${idx}: physical address required.`);
       });
     }
 
+    if (step === 2) {
+      service?.intakeFields.forEach((field) => {
+        if (field.required && !data.answers[field.id]?.trim()) errs.push(`${field.label} is required.`);
+      });
+    }
+
     // Only validate proposed names if service requires them
-    if (step === 2 && service?.requiresProposedNames) {
+    if (step === 3 && service?.requiresProposedNames) {
       if (!data.proposedNames[0].trim()) errs.push("Preferred company name is required.");
       const filled = data.proposedNames.filter((n) => n.trim().length > 0);
       if (new Set(filled.map((n) => n.toLowerCase())).size !== filled.length) {
@@ -93,14 +105,17 @@ function RegisterPage() {
     }
 
     // Documents step
-    const docStep = service?.requiresProposedNames ? 3 : 2;
+    const docStep = service?.requiresProposedNames ? 4 : 3;
     if (step === docStep) {
-      if (service?.id === "cipc") {
-        if (data.directorIdFiles.length === 0)
-          errs.push("Please upload all Director ID copies.");
-      } else {
-        if (data.idCopies.length === 0) errs.push("Please upload your ID Copy.");
-        if (data.proofOfAddress.length === 0) errs.push("Please upload the CIPC COR14.3 document.");
+      service?.documents.forEach((document) => {
+        const conditionApplies =
+          !document.requiredWhen || data.answers[document.requiredWhen.fieldId] === document.requiredWhen.equals;
+        if ((document.required || document.requiredWhen) && conditionApplies && !(data.documentFiles[document.id]?.length > 0)) {
+          errs.push(`Please upload: ${document.title}.`);
+        }
+      });
+      if (service?.id === "cipc" && (data.documentFiles.director_identity?.length ?? 0) < data.directors.length) {
+        errs.push("Upload a separate identity document for every listed director.");
       }
     }
     return errs;
@@ -137,21 +152,28 @@ function RegisterPage() {
             <DirectorsStep
               directors={data.directors}
               onChange={(directors) => update({ directors })}
+              isCompanyRegistration={service?.id === "cipc"}
             />
           )}
-          {step === 2 && service?.requiresProposedNames && (
+          {step === 2 && service && (
+            <IntakeStep
+              service={service}
+              answers={data.answers}
+              onChange={(id, value) => update({ answers: { ...data.answers, [id]: value } })}
+            />
+          )}
+          {step === 3 && service?.requiresProposedNames && (
             <NamesStep
               names={data.proposedNames}
               onChange={(proposedNames) => update({ proposedNames })}
             />
           )}
-          {step === (service?.requiresProposedNames ? 3 : 2) && (
+          {step === (service?.requiresProposedNames ? 4 : 3) && (
             <DocumentsStep
               serviceId={service?.id}
-              idCopies={data.idCopies}
-              proofOfAddress={data.proofOfAddress}
-              directorIdFiles={data.directorIdFiles}
-              onChange={(partial) => update(partial)}
+              answers={data.answers}
+              documentFiles={data.documentFiles}
+              onChange={(documentFiles) => update({ documentFiles })}
             />
           )}
 
@@ -190,20 +212,36 @@ function RegisterPage() {
   );
 }
 
-function DirectorsStep({ directors, onChange }: { directors: Director[]; onChange: (d: Director[]) => void }) {
+function DirectorsStep({
+  directors,
+  onChange,
+  isCompanyRegistration,
+}: {
+  directors: Director[];
+  onChange: (d: Director[]) => void;
+  isCompanyRegistration: boolean;
+}) {
   const setOne = (id: string, patch: Partial<Director>) =>
     onChange(directors.map((d) => (d.id === id ? { ...d, ...patch } : d)));
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-foreground">Director details</h2>
-      <p className="text-sm text-muted-foreground mt-1">Provide details for each director of the company.</p>
+      <h2 className="text-2xl font-bold text-foreground">
+        {isCompanyRegistration ? "Director details" : "Applicant / representative details"}
+      </h2>
+      <p className="text-sm text-muted-foreground mt-1">
+        {isCompanyRegistration
+          ? "Provide the legal details for every proposed director."
+          : "Provide the details of the person authorised to instruct us and answer application queries."}
+      </p>
       <div className="mt-6 space-y-6">
         {directors.map((d, i) => (
           <div key={d.id} className="rounded-xl border border-border bg-surface/60 p-5">
             <div className="flex items-center justify-between mb-4">
-              <div className="font-semibold text-foreground">Director {i + 1}</div>
-              {directors.length > 1 && (
+              <div className="font-semibold text-foreground">
+                {isCompanyRegistration ? `Director ${i + 1}` : "Authorised applicant"}
+              </div>
+              {isCompanyRegistration && directors.length > 1 && (
                 <button
                   type="button"
                   onClick={() => onChange(directors.filter((x) => x.id !== d.id))}
@@ -232,17 +270,41 @@ function DirectorsStep({ directors, onChange }: { directors: Director[]; onChang
                   placeholder="e.g. Mokoena"
                 />
               </Field>
-              <Field label="South African ID number">
+              <Field label="Identity document type">
+                <select
+                  value={d.identityType}
+                  onChange={(e) => setOne(d.id, { identityType: e.target.value as Director["identityType"] })}
+                  className={inputCls}
+                >
+                  <option value="sa_id">South African ID</option>
+                  <option value="passport">Passport</option>
+                </select>
+              </Field>
+              <Field label={d.identityType === "sa_id" ? "South African ID number" : "Passport number"}>
                 <input
                   type="text"
-                  inputMode="numeric"
-                  maxLength={13}
+                  inputMode={d.identityType === "sa_id" ? "numeric" : "text"}
+                  maxLength={d.identityType === "sa_id" ? 13 : 30}
                   value={d.idNumber}
-                  onChange={(e) => setOne(d.id, { idNumber: e.target.value.replace(/\D/g, "") })}
+                  onChange={(e) =>
+                    setOne(d.id, {
+                      idNumber: d.identityType === "sa_id" ? e.target.value.replace(/\D/g, "") : e.target.value,
+                    })
+                  }
                   className={inputCls}
-                  placeholder="13-digit ID"
+                  placeholder={d.identityType === "sa_id" ? "13-digit ID" : "Passport number"}
                 />
               </Field>
+              {d.identityType === "passport" && (
+                <Field label="Nationality">
+                  <input
+                    type="text"
+                    value={d.nationality}
+                    onChange={(e) => setOne(d.id, { nationality: e.target.value })}
+                    className={inputCls}
+                  />
+                </Field>
+              )}
               <Field label="Email address">
                 <input
                   type="email"
@@ -273,13 +335,75 @@ function DirectorsStep({ directors, onChange }: { directors: Director[]; onChang
             </div>
           </div>
         ))}
-        <button
-          type="button"
-          onClick={() => onChange([...directors, emptyDirector()])}
-          className="inline-flex items-center gap-2 rounded-md border border-dashed border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition"
-        >
-          <Plus className="h-4 w-4" /> Add Another Director
-        </button>
+        {isCompanyRegistration && (
+          <button
+            type="button"
+            onClick={() => onChange([...directors, emptyDirector()])}
+            className="inline-flex items-center gap-2 rounded-md border border-dashed border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition"
+          >
+            <Plus className="h-4 w-4" /> Add Another Director
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function IntakeStep({
+  service,
+  answers,
+  onChange,
+}: {
+  service: NonNullable<ReturnType<typeof getService>>;
+  answers: Record<string, string>;
+  onChange: (id: string, value: string) => void;
+}) {
+  return (
+    <div>
+      <h2 className="text-2xl font-bold text-foreground">{service.name} information</h2>
+      <p className="text-sm text-muted-foreground mt-1">
+        Complete every applicable field so our team can process the service without requesting basic information later.
+      </p>
+      {service.intakeNotice && (
+        <div className="mt-4 rounded-md border border-accent/30 bg-accent/5 p-3 text-sm text-foreground">
+          {service.intakeNotice}
+        </div>
+      )}
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {service.intakeFields.map((field) => (
+          <Field
+            key={field.id}
+            label={field.label}
+            required={field.required}
+            className={field.type === "textarea" ? "sm:col-span-2" : undefined}
+          >
+            {field.type === "textarea" ? (
+              <textarea
+                rows={4}
+                value={answers[field.id] ?? ""}
+                onChange={(e) => onChange(field.id, e.target.value)}
+                className={inputCls}
+              />
+            ) : field.type === "select" ? (
+              <select
+                value={answers[field.id] ?? ""}
+                onChange={(e) => onChange(field.id, e.target.value)}
+                className={inputCls}
+              >
+                <option value="">Select an option</option>
+                {field.options?.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            ) : (
+              <input
+                type={field.type}
+                value={answers[field.id] ?? ""}
+                onChange={(e) => onChange(field.id, e.target.value)}
+                className={inputCls}
+              />
+            )}
+            {field.helper && <span className="mt-1 block text-xs text-muted-foreground">{field.helper}</span>}
+          </Field>
+        ))}
       </div>
     </div>
   );
@@ -315,22 +439,20 @@ function NamesStep({ names, onChange }: { names: [string, string, string, string
 
 function DocumentsStep({
   serviceId,
-  idCopies,
-  proofOfAddress,
-  directorIdFiles,
+  answers,
+  documentFiles,
   onChange,
 }: {
   serviceId?: string;
-  idCopies: File[];
-  proofOfAddress: File[];
-  directorIdFiles: File[];
-  onChange: (p: Partial<RegistrationDraft>) => void;
+  answers: Record<string, string>;
+  documentFiles: Record<string, File[]>;
+  onChange: (files: Record<string, File[]>) => void;
 }) {
   const service = serviceId ? getService(serviceId) : null;
 
   const handleFiles = (
     files: FileList | null,
-    target: "idCopies" | "proofOfAddress" | "directorIdFiles",
+    target: string,
     current: File[]
   ) => {
     if (!files) return;
@@ -348,7 +470,7 @@ function DocumentsStep({
       accepted.push(f);
     });
     if (errs.length) alert(errs.join("\n"));
-    onChange({ [target]: [...current, ...accepted] } as Partial<RegistrationDraft>);
+    onChange({ ...documentFiles, [target]: [...current, ...accepted] });
   };
 
   return (
@@ -356,32 +478,22 @@ function DocumentsStep({
       <h2 className="text-2xl font-bold text-foreground">Upload documents</h2>
       <p className="text-sm text-muted-foreground mt-1">Files must be PDF, PNG, or JPG and under 5MB each.</p>
       <div className="mt-6 grid grid-cols-1 gap-6">
-        {serviceId === "cipc" ? (
-          <Uploader
-            title="All Director ID Copies"
-            helper="Upload certified copies for every director listed above."
-            files={directorIdFiles}
-            onAdd={(fl) => handleFiles(fl, "directorIdFiles", directorIdFiles)}
-            onRemove={(i) => onChange({ directorIdFiles: directorIdFiles.filter((_, idx) => idx !== i) })}
-          />
-        ) : (
-          <>
-            <Uploader
-              title="ID Copy"
-              helper="Your valid South African ID or passport copy."
-              files={idCopies}
-              onAdd={(fl) => handleFiles(fl, "idCopies", idCopies)}
-              onRemove={(i) => onChange({ idCopies: idCopies.filter((_, idx) => idx !== i) })}
-            />
-            <Uploader
-              title="CIPC COR14.3"
-              helper="Your company's CIPC COR14.3 registration certificate."
-              files={proofOfAddress}
-              onAdd={(fl) => handleFiles(fl, "proofOfAddress", proofOfAddress)}
-              onRemove={(i) => onChange({ proofOfAddress: proofOfAddress.filter((_, idx) => idx !== i) })}
-            />
-          </>
-        )}
+        {service?.documents
+          .filter((document) => !document.requiredWhen || answers[document.requiredWhen.fieldId] === document.requiredWhen.equals)
+          .map((document) => {
+            const files = documentFiles[document.id] ?? [];
+            return (
+              <Uploader
+                key={document.id}
+                title={`${document.title}${document.required || document.requiredWhen ? " *" : " (optional)"}`}
+                helper={document.helper}
+                files={files}
+                multiple={document.multiple}
+                onAdd={(fl) => handleFiles(fl, document.id, files)}
+                onRemove={(i) => onChange({ ...documentFiles, [document.id]: files.filter((_, idx) => idx !== i) })}
+              />
+            );
+          })}
       </div>
     </div>
   );
@@ -393,12 +505,14 @@ function Uploader({
   files,
   onAdd,
   onRemove,
+  multiple = true,
 }: {
   title: string;
   helper: string;
   files: File[];
   onAdd: (f: FileList | null) => void;
   onRemove: (i: number) => void;
+  multiple?: boolean;
 }) {
   const id = useMemo(() => `up-${Math.random().toString(36).slice(2, 9)}`, []);
   return (
@@ -415,7 +529,7 @@ function Uploader({
         <input
           id={id}
           type="file"
-          multiple
+          multiple={multiple}
           accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
           className="sr-only"
           onChange={(e) => {

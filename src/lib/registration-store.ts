@@ -6,6 +6,8 @@ export type Director = {
   email: string;
   phone: string;
   address: string;
+  identityType: "sa_id" | "passport";
+  nationality: string;
 };
 
 export type RegistrationDraft = {
@@ -15,15 +17,18 @@ export type RegistrationDraft = {
   idCopies: File[];
   proofOfAddress: File[];
   directorIdFiles: File[];
+  answers: Record<string, string>;
+  documentFiles: Record<string, File[]>;
   termsAccepted: boolean;
 };
 
 const KEY = "vertcorp-registration-draft";
 
-let sessionFiles: Pick<RegistrationDraft, "idCopies" | "proofOfAddress" | "directorIdFiles"> = {
+let sessionFiles: Pick<RegistrationDraft, "idCopies" | "proofOfAddress" | "directorIdFiles" | "documentFiles"> = {
   idCopies: [],
   proofOfAddress: [],
   directorIdFiles: [],
+  documentFiles: {},
 };
 
 export const emptyDirector = (): Director => ({
@@ -34,6 +39,8 @@ export const emptyDirector = (): Director => ({
   email: "",
   phone: "",
   address: "",
+  identityType: "sa_id",
+  nationality: "South Africa",
 });
 
 export const emptyRegistration = (): RegistrationDraft => ({
@@ -42,17 +49,24 @@ export const emptyRegistration = (): RegistrationDraft => ({
   idCopies: [],
   proofOfAddress: [],
   directorIdFiles: [],
+  answers: {},
+  documentFiles: {},
   termsAccepted: false,
 });
 
-type Persisted = Omit<RegistrationDraft, "idCopies" | "proofOfAddress" | "directorIdFiles">;
+type Persisted = Omit<RegistrationDraft, "idCopies" | "proofOfAddress" | "directorIdFiles" | "documentFiles">;
 
 export const loadRegistration = (): RegistrationDraft => {
   const withSessionFiles = (draft: RegistrationDraft): RegistrationDraft => ({
     ...draft,
+    directors:
+      draft.directors?.length > 0
+        ? draft.directors.map((director) => ({ ...emptyDirector(), ...director }))
+        : [emptyDirector()],
     idCopies: sessionFiles.idCopies,
     proofOfAddress: sessionFiles.proofOfAddress,
     directorIdFiles: sessionFiles.directorIdFiles,
+    documentFiles: sessionFiles.documentFiles,
   });
 
   if (typeof window === "undefined") return emptyRegistration();
@@ -68,14 +82,14 @@ export const loadRegistration = (): RegistrationDraft => {
 
 export const saveRegistration = (data: RegistrationDraft) => {
   if (typeof window === "undefined") return;
-  const { idCopies, proofOfAddress, directorIdFiles, ...persist } = data;
-  sessionFiles = { idCopies, proofOfAddress, directorIdFiles };
+  const { idCopies, proofOfAddress, directorIdFiles, documentFiles, ...persist } = data;
+  sessionFiles = { idCopies, proofOfAddress, directorIdFiles, documentFiles };
   window.localStorage.setItem(KEY, JSON.stringify(persist));
 };
 
 export const clearRegistration = () => {
   if (typeof window === "undefined") return;
-  sessionFiles = { idCopies: [], proofOfAddress: [], directorIdFiles: [] };
+  sessionFiles = { idCopies: [], proofOfAddress: [], directorIdFiles: [], documentFiles: {} };
   window.localStorage.removeItem(KEY);
 };
 

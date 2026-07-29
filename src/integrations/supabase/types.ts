@@ -108,6 +108,7 @@ export type Database = {
           delivered_at: string | null
           directors: Json
           id: string
+          intake_answers: Json
           payment_ref: string | null
           primary_director_email: string
           primary_director_name: string
@@ -127,6 +128,7 @@ export type Database = {
           delivered_at?: string | null
           directors?: Json
           id?: string
+          intake_answers?: Json
           payment_ref?: string | null
           primary_director_email: string
           primary_director_name: string
@@ -146,6 +148,7 @@ export type Database = {
           delivered_at?: string | null
           directors?: Json
           id?: string
+          intake_answers?: Json
           payment_ref?: string | null
           primary_director_email?: string
           primary_director_name?: string

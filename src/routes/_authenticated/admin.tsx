@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, Shield, Search, Loader2, AlertCircle, Upload, CheckCircle2 } from "lucide-react";
+import { Download, Shield, Search, Loader2, AlertCircle, Upload, CheckCircle2, Eye } from "lucide-react";
 import { SiteShell } from "@/components/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { getService } from "@/lib/services";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -24,11 +25,22 @@ type ApplicationWithDocs = {
   primary_director_name: string;
   primary_director_email: string;
   proposed_names: string[];
+  directors: {
+    fullNames: string;
+    surname: string;
+    idNumber: string;
+    identityType?: string;
+    nationality?: string;
+    email: string;
+    phone: string;
+    address: string;
+  }[];
   status: string;
   submitted_at: string | null;
   payment_ref: string | null;
   admin_delivered: boolean;
   created_at: string;
+  intake_answers: Record<string, string>;
   documents: {
     id: string;
     kind: string;
@@ -47,6 +59,7 @@ function AdminPage() {
   const [query, setQuery] = useState("");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<ApplicationWithDocs | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -291,6 +304,13 @@ function AdminPage() {
                     </td>
                     <td className="px-4 py-3 text-sm space-y-2 min-w-[180px]">
                       <button
+                        onClick={() => setSelectedApplication(app)}
+                        className="w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md border border-border bg-card text-foreground text-xs font-medium hover:bg-secondary transition"
+                      >
+                        <Eye className="h-3 w-3" />
+                        View full intake
+                      </button>
+                      <button
                         onClick={() => downloadAllDocuments(app)}
                         disabled={downloadingId === app.id || app.documents.length === 0}
                         className="w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-medium hover:opacity-90 transition disabled:opacity-60"
@@ -325,7 +345,96 @@ function AdminPage() {
         <div className="mt-4 text-sm text-muted-foreground">
           Showing {filtered.length} of {applications.length} applications
         </div>
+
+        <Dialog open={Boolean(selectedApplication)} onOpenChange={(open) => !open && setSelectedApplication(null)}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{getService(selectedApplication?.service_id || "")?.name || "Application intake"}</DialogTitle>
+              <DialogDescription>
+                Complete client information and attachment checklist captured before payment.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedApplication && (
+              <div className="space-y-6">
+                <section>
+                  <h3 className="font-semibold text-foreground mb-3">Applicant</h3>
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <IntakeRow label="Name" value={selectedApplication.primary_director_name} />
+                    <IntakeRow label="Email" value={selectedApplication.primary_director_email} />
+                    <IntakeRow label="Payment reference" value={selectedApplication.payment_ref || "Pending"} />
+                  </dl>
+                </section>
+                <section>
+                  <h3 className="font-semibold text-foreground mb-3">
+                    {selectedApplication.service_id === "cipc" ? "Directors" : "Authorised representative"}
+                  </h3>
+                  <div className="space-y-3">
+                    {(selectedApplication.directors ?? []).map((director, index) => (
+                      <dl key={`${director.idNumber}-${index}`} className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-md border border-border p-3 text-sm">
+                        <IntakeRow label="Full name" value={`${director.fullNames} ${director.surname}`} />
+                        <IntakeRow
+                          label={director.identityType === "passport" ? "Passport" : "SA ID"}
+                          value={director.idNumber}
+                        />
+                        <IntakeRow label="Nationality" value={director.nationality || "South Africa"} />
+                        <IntakeRow label="Email" value={director.email} />
+                        <IntakeRow label="Phone" value={director.phone} />
+                        <IntakeRow label="Physical address" value={director.address} wide />
+                      </dl>
+                    ))}
+                  </div>
+                  {selectedApplication.proposed_names?.some(Boolean) && (
+                    <div className="mt-3 text-sm">
+                      <div className="text-muted-foreground">Proposed names (in preference order)</div>
+                      <ol className="mt-1 list-decimal list-inside text-foreground">
+                        {selectedApplication.proposed_names.filter(Boolean).map((name) => <li key={name}>{name}</li>)}
+                      </ol>
+                    </div>
+                  )}
+                </section>
+                <section>
+                  <h3 className="font-semibold text-foreground mb-3">Service information</h3>
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    {(getService(selectedApplication.service_id)?.intakeFields ?? []).map((field) => (
+                      <IntakeRow
+                        key={field.id}
+                        label={field.label}
+                        value={selectedApplication.intake_answers?.[field.id] || "—"}
+                        wide={field.type === "textarea"}
+                      />
+                    ))}
+                  </dl>
+                </section>
+                <section>
+                  <h3 className="font-semibold text-foreground mb-3">Received documents</h3>
+                  <ul className="space-y-2 text-sm">
+                    {selectedApplication.documents.map((document) => {
+                      const requirement = getService(selectedApplication.service_id)?.documents.find(
+                        (item) => item.id === document.kind
+                      );
+                      return (
+                        <li key={document.id} className="rounded-md border border-border p-3">
+                          <div className="font-medium text-foreground">{requirement?.title || document.kind}</div>
+                          <div className="text-muted-foreground">{document.file_name}</div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </SiteShell>
+  );
+}
+
+function IntakeRow({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+  return (
+    <div className={wide ? "sm:col-span-2" : undefined}>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 whitespace-pre-wrap text-foreground">{value}</dd>
+    </div>
   );
 }
