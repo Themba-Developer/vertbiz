@@ -27,6 +27,11 @@ function CheckoutPage() {
   const search = useSearch({ from: "/_authenticated/checkout" });
   const { user } = useAuth();
   const [data, setData] = useState<RegistrationDraft>(emptyRegistration());
+  const [existingApplication, setExistingApplication] = useState<{
+    service_id: string;
+    primary_director_name: string;
+    proposed_names: string[];
+  } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -34,9 +39,37 @@ function CheckoutPage() {
     setData({ ...loaded, serviceId: search.serviceId || loaded.serviceId || "cipc" });
   }, [search.serviceId]);
 
+  useEffect(() => {
+    if (!search.applicationId) {
+      setExistingApplication(null);
+      return;
+    }
+
+    (async () => {
+      const { data: application, error } = await supabase
+        .from("applications")
+        .select("service_id,primary_director_name,proposed_names")
+        .eq("id", search.applicationId)
+        .eq("status", "pending_payment")
+        .maybeSingle();
+
+      if (error || !application) {
+        toast.error(error?.message || "This pending application could not be found.");
+        navigate({ to: "/dashboard" });
+        return;
+      }
+      setExistingApplication(application);
+    })();
+  }, [navigate, search.applicationId]);
+
   const primary = data.directors[0];
-  const primaryName = data.proposedNames[0] || "Your company";
-  const service = getService(data.serviceId || search.serviceId || "cipc") || getService("cipc");
+  const primaryName =
+    existingApplication?.proposed_names?.[0] ||
+    existingApplication?.primary_director_name ||
+    data.proposedNames[0] ||
+    "Your company";
+  const service =
+    getService(existingApplication?.service_id || data.serviceId || search.serviceId || "cipc") || getService("cipc");
   const amount = service?.price || REGISTRATION_FEE;
 
   const submitToPayFast = (action: string, fields: Record<string, string>) => {

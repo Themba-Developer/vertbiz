@@ -4,9 +4,20 @@ import { SiteShell } from "@/components/SiteShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { StatusBadge, type AppStatus } from "@/components/StatusBadge";
-import { Download, FileText, PlusCircle, PartyPopper } from "lucide-react";
+import { CreditCard, Download, FileText, PlusCircle, PartyPopper, Trash2 } from "lucide-react";
 import { getService } from "@/lib/services";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Row = {
   id: string;
@@ -43,6 +54,7 @@ function Dashboard() {
   const [rows, setRows] = useState<Row[]>([]);
   const [deliveries, setDeliveries] = useState<Record<string, Delivery[]>>({});
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -88,6 +100,43 @@ function Dashboard() {
       URL.revokeObjectURL(url);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Download failed");
+    }
+  };
+
+  const cancelApplication = async (applicationId: string) => {
+    setCancellingId(applicationId);
+    try {
+      const { data: documents, error: documentsError } = await supabase
+        .from("application_documents")
+        .select("storage_path")
+        .eq("application_id", applicationId);
+      if (documentsError) throw documentsError;
+
+      const storagePaths = (documents ?? []).map((document) => document.storage_path);
+      if (storagePaths.length > 0) {
+        const { error: storageError } = await supabase.storage.from("documents").remove(storagePaths);
+        if (storageError) throw storageError;
+      }
+
+      const { error: deleteError } = await supabase
+        .from("applications")
+        .delete()
+        .eq("id", applicationId)
+        .eq("user_id", user!.id)
+        .eq("status", "pending_payment");
+      if (deleteError) throw deleteError;
+
+      setRows((current) => current.filter((row) => row.id !== applicationId));
+      setDeliveries((current) => {
+        const next = { ...current };
+        delete next[applicationId];
+        return next;
+      });
+      toast.success("Application cancelled.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not cancel the application.");
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -154,6 +203,48 @@ function Dashboard() {
                         {r.submitted_at ? new Date(r.submitted_at).toLocaleDateString("en-ZA") : "—"}
                       </div>
                     </div>
+                    {r.status === "pending_payment" && !r.admin_delivered && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          to="/checkout"
+                          search={{ serviceId: r.service_id, applicationId: r.id }}
+                          className="inline-flex items-center gap-2 rounded-md bg-accent text-accent-foreground px-3 py-2 text-sm font-semibold hover:opacity-90 transition"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          Continue to payment
+                        </Link>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={cancellingId === r.id}
+                              className="inline-flex items-center gap-2 rounded-md border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition disabled:opacity-60"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              {cancellingId === r.id ? "Cancelling..." : "Cancel"}
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel this application?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This permanently removes the pending application and its uploaded documents. This
+                                action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep application</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => cancelApplication(r.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Cancel application
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
                   </div>
 
                   {r.admin_delivered && files.length > 0 && (
